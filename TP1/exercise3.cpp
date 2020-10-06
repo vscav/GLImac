@@ -9,20 +9,23 @@
 
 using namespace glimac;
 
-class Vertex2DColor {
+class Vertex2DColor
+{
     public:
 
         glm::vec2 position;
         glm::vec3 color;
 
         Vertex2DColor(){};
-        Vertex2DColor(glm::vec2 position, glm::vec3 color){
+        Vertex2DColor(glm::vec2 position, glm::vec3 color)
+        {
             this->position = position;
             this->color = color;
         };
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     // Initialize SDL and open a window
     SDLWindowManager windowManager(800, 600, "GLImac");
 

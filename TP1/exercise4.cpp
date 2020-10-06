@@ -5,10 +5,26 @@
 #include <glimac/Program.hpp>
 #include <glimac/FilePath.hpp>
 
+#include <glimac/glm.hpp>
+
 using namespace glimac;
 
-int main(int argc, char** argv)
+class Vertex2DColor
 {
+    public:
+
+        glm::vec2 position;
+        glm::vec3 color;
+
+        Vertex2DColor(){};
+        Vertex2DColor(glm::vec2 position, glm::vec3 color)
+        {
+            this->position = position;
+            this->color = color;
+        };
+};
+
+int main(int argc, char** argv) {
     // Initialize SDL and open a window
     SDLWindowManager windowManager(800, 600, "GLImac");
 
@@ -38,13 +54,17 @@ int main(int argc, char** argv)
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
     // Vertices array
-    GLfloat vertices[] = { -0.5f, -0.5f, 1.f, 0.f, 0.f, // first vertice
-                            0.5f, -0.5f, 0.f, 1.f, 0.f, // second vertice
-                            0.0f, 0.5f, 0.f, 0.f, 1.f // third vertice
-                        };
+    Vertex2DColor vertices[] = { 
+        Vertex2DColor(glm::vec2(-0.5, -0.5), glm::vec3(1, 0, 0)),
+        Vertex2DColor(glm::vec2(-0.5, -0.5), glm::vec3(1, 0, 0)),
+        Vertex2DColor(glm::vec2(-0.5, 0.5), glm::vec3(0, 1, 0)),
+        Vertex2DColor(glm::vec2(0.5, -0.5), glm::vec3(0, 1, 0)),
+        Vertex2DColor(glm::vec2(0.5, 0.5), glm::vec3(0, 0, 1)),
+        Vertex2DColor(glm::vec2(0.5, 0.5), glm::vec3(0, 0, 1))
+    };
 
     // Send data
-    glBufferData(GL_ARRAY_BUFFER, 15 * sizeof(GLfloat), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(Vertex2DColor), vertices, GL_STATIC_DRAW);
 
     // Debind (to avoid errors)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -58,14 +78,15 @@ int main(int argc, char** argv)
 
     // Activation of vertex attributs
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
     glEnableVertexAttribArray(3);
     glVertexAttribPointer(
         3, 
         2, 
         GL_FLOAT, 
         GL_FALSE, 
-        5 * sizeof(GLfloat), 
-        0
+        sizeof(Vertex2DColor), 
+        offsetof(Vertex2DColor, position)/*0*/
     );
         
     glEnableVertexAttribArray(8);
@@ -74,9 +95,10 @@ int main(int argc, char** argv)
         3, 
         GL_FLOAT, 
         GL_FALSE, 
-        5 * sizeof(GLfloat), 
-        (const GLvoid*) (2 * sizeof(GLfloat))
+        sizeof(Vertex2DColor), 
+        (const GLvoid*) offsetof(Vertex2DColor, color)/*(const GLvoid*) (2 * sizeof(GLfloat))*/
     );
+    
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     
 
@@ -92,7 +114,7 @@ int main(int argc, char** argv)
         }
 
         glClear(GL_COLOR_BUFFER_BIT);
-        glDrawArrays(GL_TRIANGLES, 0 /* Because no offset */, 3);
+        glDrawArrays(GL_TRIANGLES, 0 /* Because no offset */, 6);
 
         // Update the display
         windowManager.swapBuffers();
