@@ -14,7 +14,8 @@ int main(int argc, char** argv)
 
     // Initialize glew for OpenGL3+ support
     GLenum glewInitError = glewInit();
-    if(GLEW_OK != glewInitError) {
+    if(GLEW_OK != glewInitError)
+    {
         std::cerr << glewGetErrorString(glewInitError) << std::endl;
         return EXIT_FAILURE;
     }
@@ -82,11 +83,14 @@ int main(int argc, char** argv)
 
     // Application loop:
     bool done = false;
-    while(!done) {
+    while(!done)
+    {
         // Event loop:
         SDL_Event e;
-        while(windowManager.pollEvent(e)) {
-            if(e.type == SDL_QUIT) {
+        while(windowManager.pollEvent(e))
+        {
+            if(e.type == SDL_QUIT)
+            {
                 done = true; // Leave the loop after this iteration
             }
         }
