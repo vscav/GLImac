@@ -95,7 +95,7 @@ int main(int argc, char** argv)
         GL_FLOAT, 
         GL_FALSE, 
         sizeof(Vertex2DColor), 
-        (const GLvoid*) offsetof(Vertex2DColor, color)/*(const GLvoid*) (2 * sizeof(GLfloat))*/
+        (const GLvoid*) offsetof(Vertex2DColor, color)
     );
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);

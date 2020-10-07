@@ -57,11 +57,11 @@ int main(int argc, char** argv)
 
     // Vertices array
     Vertex2DColor vertices[] = { 
-        Vertex2DColor(glm::vec2(-0.5, -0.5), glm::vec3(1, 0, 0)),
-        Vertex2DColor(glm::vec2(-0.5, -0.5), glm::vec3(1, 0, 0)),
         Vertex2DColor(glm::vec2(-0.5, 0.5), glm::vec3(0, 1, 0)),
-        Vertex2DColor(glm::vec2(0.5, -0.5), glm::vec3(0, 1, 0)),
+        Vertex2DColor(glm::vec2(-0.5, -0.5), glm::vec3(1, 0, 0)),
         Vertex2DColor(glm::vec2(0.5, 0.5), glm::vec3(0, 0, 1)),
+        Vertex2DColor(glm::vec2(-0.5, -0.5), glm::vec3(1, 0, 0)),
+        Vertex2DColor(glm::vec2(0.5, -0.5), glm::vec3(0, 1, 0)),
         Vertex2DColor(glm::vec2(0.5, 0.5), glm::vec3(0, 0, 1))
     };
 
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
         GL_FLOAT, 
         GL_FALSE, 
         sizeof(Vertex2DColor), 
-        offsetof(Vertex2DColor, position)/*0*/
+        (const GLvoid*) offsetof(Vertex2DColor, position)/*0*/
     );
         
     glEnableVertexAttribArray(8);

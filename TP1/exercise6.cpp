@@ -93,10 +93,22 @@ int main(int argc, char** argv)
     glEnableVertexAttribArray(VERTEX_ATTR_POSITION);
     glEnableVertexAttribArray(VERTEX_ATTR_COLOR);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glVertexAttribPointer(VERTEX_ATTR_POSITION, 2, GL_FLOAT, GL_FALSE, 
-        sizeof(Vertex2DColor), (const GLvoid*) offsetof(Vertex2DColor, position));
-    glVertexAttribPointer(VERTEX_ATTR_COLOR, 3, GL_FLOAT, GL_FALSE, 
-        sizeof(Vertex2DColor), (const GLvoid*) offsetof(Vertex2DColor, color));
+    glVertexAttribPointer(
+        VERTEX_ATTR_POSITION,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        sizeof(Vertex2DColor),
+        (const GLvoid*) offsetof(Vertex2DColor, position)
+    );
+    glVertexAttribPointer(
+        VERTEX_ATTR_COLOR,
+        3,
+        GL_FLOAT,
+        GL_FALSE, 
+        sizeof(Vertex2DColor),
+        (const GLvoid*) offsetof(Vertex2DColor, color)
+    );
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     glBindVertexArray(0);
