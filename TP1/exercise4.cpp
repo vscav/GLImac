@@ -48,7 +48,7 @@ int main(int argc, char** argv)
     std::cout << "OpenGL Version : " << glGetString(GL_VERSION) << std::endl;
     std::cout << "GLEW Version : " << glewGetString(GLEW_VERSION) << std::endl;
 
-    // vbo creation
+    // VBO creation
     GLuint vbo;
     glGenBuffers(1, &vbo);
 
@@ -68,14 +68,14 @@ int main(int argc, char** argv)
     // Send data
     glBufferData(GL_ARRAY_BUFFER, 6 * sizeof(Vertex2DColor), vertices, GL_STATIC_DRAW);
 
-    // Debind (to avoid errors)
+    // Unbind (to avoid errors)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    // vao creation
+    // VAO creation
     GLuint vao;
     glGenVertexArrays(1, &vao);
 
-    // vao binding
+    // VAO binding
     glBindVertexArray(vao);
 
     // Activation of vertex attributs
@@ -101,7 +101,11 @@ int main(int argc, char** argv)
         (const GLvoid*) offsetof(Vertex2DColor, color)/*(const GLvoid*) (2 * sizeof(GLfloat))*/
     );
     
+    // Unbind VBO
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    // Unbind VAO
+    glBindVertexArray(0);
     
 
     // Application loop:
