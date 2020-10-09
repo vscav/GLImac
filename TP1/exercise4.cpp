@@ -105,7 +105,7 @@ int main(int argc, char** argv)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // Unbind VAO
-    // glBindVertexArray(0);
+    glBindVertexArray(0);
     
 
     // Application loop:
@@ -123,7 +123,15 @@ int main(int argc, char** argv)
         }
 
         glClear(GL_COLOR_BUFFER_BIT);
+
+        // Bind vao
+        glBindVertexArray(vao);
+
+        // Drawing call
         glDrawArrays(GL_TRIANGLES, 0 /* Because no offset */, 6);
+
+        // Unbind vao
+        glBindVertexArray(0);
 
         // Update the display
         windowManager.swapBuffers();
