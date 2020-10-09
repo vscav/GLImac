@@ -49,6 +49,12 @@ int main(int argc, char** argv)
     std::cout << "OpenGL Version : " << glGetString(GL_VERSION) << std::endl;
     std::cout << "GLEW Version : " << glewGetString(GLEW_VERSION) << std::endl;
 
+    // Number of triangles
+    const unsigned int NB_TRIANGLES = 100;
+
+    // Radius of circle
+    const float RADIUS = 0.5f;
+
     // VBO creation
     GLuint vbo;
     glGenBuffers(1, &vbo);
@@ -56,36 +62,28 @@ int main(int argc, char** argv)
     // buffer binding
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-    // Number of triangles
-    const unsigned int NB_TRIANGLES = 250;
-
-    // Radius of circle
-    const float RADIUS = 0.5f;
-
     // Creation of vector and fill it with 2D vertices
     std::vector<Vertex2DColor> vertices;
 
     for(unsigned int i = 0; i < NB_TRIANGLES; ++i) 
     {
-        if(i == 0)
-        {
-            vertices.push_back(Vertex2DColor(
-                glm::vec2(0.5, 0.0),
-                glm::vec3(1, 1, 1))
-            );
-        }
-        else
-        {
-            vertices.push_back(vertices.back());
-        }
         vertices.push_back(Vertex2DColor(
             glm::vec2(0.0, 0.0),
             glm::vec3(1, 1, 1))
         );
+
         vertices.push_back(Vertex2DColor(
             glm::vec2(
                 RADIUS * glm::cos(2.f * i * glm::pi<float>() / NB_TRIANGLES),
                 RADIUS * glm::sin(2.f * i * glm::pi<float>() / NB_TRIANGLES)
+            ),
+            glm::vec3(1, 1, 1))
+        );
+
+        vertices.push_back(Vertex2DColor(
+            glm::vec2(
+                RADIUS * glm::cos(2.f * (i + 1) * glm::pi<float>() / NB_TRIANGLES),
+                RADIUS * glm::sin(2.f * (i + 1) * glm::pi<float>() / NB_TRIANGLES)
             ),
             glm::vec3(1, 1, 1))
         );
@@ -131,7 +129,7 @@ int main(int argc, char** argv)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // Unbind VAO
-    glBindVertexArray(0);
+    // glBindVertexArray(0);
 
     // Application loop:
     bool done = false;
