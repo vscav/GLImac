@@ -6,6 +6,7 @@ layout(location = 0) in vec2 aVertexPosition;
 layout(location = 1) in vec3 aVertexColor;
 
 out vec3 vColor;
+out vec2 vPosition;
 
 mat3 translate(float tx, float ty) {
     mat3 M = mat3(vec3(1, 0, 0), vec3(0, 1, 0), vec3(tx, ty, 1));
@@ -25,6 +26,7 @@ mat3 rotate(float a) {
 
 void main() {
     vColor = aVertexColor;
-    vec2 transformed = (vec3(aVertexPosition, 1)).xy;
+    vPosition = aVertexPosition;
+    vec2 transformed = (scale(2.0, 2.0) * vec3(aVertexPosition, 1)).xy;
     gl_Position = vec4(transformed, 0, 1);
 }
