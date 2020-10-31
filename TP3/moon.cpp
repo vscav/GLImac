@@ -113,6 +113,12 @@ int main(int argc, char** argv) {
     // Unbind the VAO
     glBindVertexArray(0);
 
+    // Get a certain amount of random transformation (rotation) axes
+    unsigned int moonCount = 32;
+	std::vector<glm::vec3> randomTransforms;
+	for (unsigned int i = 0; i < moonCount; i++)
+		randomTransforms.push_back(glm::sphericalRand(2.f));
+
     // Application loop:
     bool done = false;
     while(!done) {
@@ -136,6 +142,47 @@ int main(int argc, char** argv) {
         glBindVertexArray(vao);
         // Drawing call
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
+        // Unbind the VAO
+        glBindVertexArray(0);
+
+        // 1°) Static small moon on the leftside
+        // glm::mat4 MVMatrix = glm::translate(glm::mat4(1), glm::vec3(-2, 0, -5)); // Translation
+        // MVMatrix = glm::scale(MVMatrix, glm::vec3(0.2, 0.2, 0.2)); // Translation * Scale
+        // Bind the VAO
+        // glBindVertexArray(vao);
+        // // Drawing call
+        // glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
+        // // Unbind the VAO
+        // glBindVertexArray(0);
+
+        // 2°) Small moon moving around the earth
+        // glm::mat4 MVMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, -5)); // Translation
+        // MVMatrix = glm::rotate(MVMatrix, windowManager.getTime(), glm::vec3(0, 1, 0)); // Translation * Rotation
+        // MVMatrix = glm::translate(MVMatrix, glm::vec3(-2, 0, 0)); // Translation * Rotation * Translation
+        // MVMatrix = glm::scale(MVMatrix, glm::vec3(0.2, 0.2, 0.2)); // Translation * Rotation * Translation * Scale
+		// Bind the VAO
+        // glBindVertexArray(vao);
+        // // Drawing call
+        // glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
+        // // Unbind the VAO
+        // glBindVertexArray(0);
+
+        // 3°) 32 moons moving around the earth
+        // Bind the VAO
+        glBindVertexArray(vao);
+        for(unsigned int i = 0; i < moonCount; i++) {
+            glm::mat4 MVMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, -5)); // Translation
+            MVMatrix = glm::rotate(MVMatrix, (1+randomTransforms[i][0]+randomTransforms[i][1]+randomTransforms[i][2]) * windowManager.getTime(), glm::vec3(0, 1, 0)); // Translation * Rotation
+            MVMatrix = glm::translate(MVMatrix, randomTransforms[i]); // Translation * Rotation * Translation
+            MVMatrix = glm::scale(MVMatrix, glm::vec3(0.2, 0.2, 0.2)); // Translation * Rotation * Translation * Scale
+
+            glUniformMatrix4fv(MVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(ProjMatrix * MVMatrix));
+            glUniformMatrix4fv(MVMatrixLocation, 1, GL_FALSE, glm::value_ptr(MVMatrix));
+            glUniformMatrix4fv(NormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+
+            // Drawing call
+            glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
+        }
         // Unbind the VAO
         glBindVertexArray(0);
 
