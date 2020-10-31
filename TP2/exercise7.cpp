@@ -51,16 +51,34 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    // Load texture
-    std::unique_ptr<Image> image = loadImage("/home/vincent/Bureau/Synthèse d'images/A2/GLImac/assets/textures/triforce.png");
+    // Load texture (absolute path to the texture file)
+    std::unique_ptr<Image> image = loadImage("/home/vincent/Documents/Github/GLImac/assets/textures/triforce.png");
 
+    if (image == NULL) {
+        std::cout << "Texture unique ptr is null. Exit program." << std::endl;
+        return 0;
+    }
+
+    // Generate the texture
     GLuint triforceTexture;
     glGenTextures(1, &triforceTexture);
 
     // Bind the texture
     glBindTexture(GL_TEXTURE_2D, triforceTexture);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image->getHeight(), image->getHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, image->getPixels());
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RGBA,
+        image->getHeight(),
+        image->getHeight(),
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        image->getPixels()
+    );
+
+    // Texture filtering parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -71,14 +89,17 @@ int main(int argc, char** argv) {
     FilePath applicationPath(argv[0]);
     Program program = loadProgram(
         applicationPath.dirPath() + "shaders/tex2D-v2.vs.glsl",
-        applicationPath.dirPath() + "shaders/tex2D.fs.glsl"
+        applicationPath.dirPath() + "shaders/tex2D-v2.fs.glsl"
     );
+    // Make the program use them
     program.use();
 
     const GLuint programId = program.getGLId();
 
     GLint uModelMatrixLocation = glGetUniformLocation(programId, "uModelMatrix");
-    GLint uColorLocation = glGetUniformLocation(programId, "uColor");
+
+    GLint textureLocation = glGetUniformLocation(program.getGLId(), "uTexture");
+    glUniform1i(textureLocation, 0);
 
     std::cout << "OpenGL Version : " << glGetString(GL_VERSION) << std::endl;
     std::cout << "GLEW Version : " << glewGetString(GLEW_VERSION) << std::endl;
@@ -97,13 +118,13 @@ int main(int argc, char** argv) {
         Vertex2DUV(glm::vec2(0, 1), glm::vec2(0.5, 0))
     };
 
-    // Send data
+    // Send data (GL_STATIC_DRAW is used on a buffer whose data will never change)
     glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(Vertex2DUV), vertices, GL_STATIC_DRAW);
 
     // Unbind (to avoid errors)
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-    // VAO creation
+    // VAO creation (it will describe the way vertices attributs are sorted in one or more VBOs)
     GLuint vao;
     glGenVertexArrays(1, &vao);
 
@@ -151,6 +172,9 @@ int main(int argc, char** argv) {
 
         glClear(GL_COLOR_BUFFER_BIT);
 
+        // Bind texture
+        glBindTexture(GL_TEXTURE_2D, triforceTexture);
+
         // Update rotating values
         anticlockwise -= 0.15;
         clockwise += 0.15;
@@ -158,36 +182,35 @@ int main(int argc, char** argv) {
         // Bind vao
         glBindVertexArray(vao);
 
-         // Apply to uniform variable uModelMatrix and uColor
+         // Apply to uniform variable uModelMatrix
         glUniformMatrix3fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(translate(0.5, 0.5) * scale(0.25, 0.25) * rotate(clockwise)));
-        glUniform3fv(uColorLocation, 1, glm::value_ptr(glm::vec3(0.5, 0.5, 0.9)));
 
         // Drawing call
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        // Apply to uniform variable uModelMatrix and uColor
+        // Apply to uniform variable uModelMatrix
         glUniformMatrix3fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(translate(0.5, -0.5) * scale(0.25, 0.25) * rotate(anticlockwise)));
-        glUniform3fv(uColorLocation, 1, glm::value_ptr(glm::vec3(0.8, 0.5, 0.1)));
 
         // Drawing call
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        // Apply to uniform variable uModelMatrix and uColor
+        // Apply to uniform variable uModelMatrix
         glUniformMatrix3fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(translate(-0.5, -0.5) * scale(0.25, 0.25) * rotate(clockwise)));
-        glUniform3fv(uColorLocation, 1, glm::value_ptr(glm::vec3(1.0, 1.0, 0.8)));
 
         // Drawing call
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
-        // Apply to uniform variable uModelMatrix and uColor
+        // Apply to uniform variable uModelMatrix
         glUniformMatrix3fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(translate(-0.5, 0.5) * scale(0.25, 0.25) * rotate(anticlockwise)));
-        glUniform3fv(uColorLocation, 1, glm::value_ptr(glm::vec3(0.1, 0.9, 0.6)));
 
         // Drawing call
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // Unbind vao
         glBindVertexArray(0);
+
+        // Unbind the texture
+        glBindTexture(GL_TEXTURE_2D, 0);
 
         // Update the display
         windowManager.swapBuffers();
