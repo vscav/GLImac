@@ -86,7 +86,7 @@ int main(int argc, char** argv)
         GL_FLOAT, 
         GL_FALSE, 
         sizeof(Vertex2DColor), 
-        offsetof(Vertex2DColor, position)/*0*/
+        (const GLvoid*) offsetof(Vertex2DColor, position)/*0*/
     );
         
     glEnableVertexAttribArray(1);

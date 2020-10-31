@@ -71,7 +71,7 @@ int main(int argc, char** argv)
         GL_FLOAT, 
         GL_FALSE, 
         2 * sizeof(GLfloat), 
-        0
+        (const GLvoid*) 0
     );
     
     // Unbind VBO

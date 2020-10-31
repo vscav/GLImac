@@ -38,6 +38,7 @@ int main(int argc, char** argv)
     }
 
     // Load shaders
+    // executable : TP2/TP2_exercise2 color2D.vs.glsl color2D.fs.glsl
     FilePath applicationPath(argv[0]);
     Program program = loadProgram(
         applicationPath.dirPath() + "shaders/" + argv[1],
@@ -86,7 +87,7 @@ int main(int argc, char** argv)
         GL_FLOAT, 
         GL_FALSE, 
         sizeof(Vertex2DColor), 
-        offsetof(Vertex2DColor, position)/*0*/
+        (const GLvoid*) offsetof(Vertex2DColor, position)/*0*/
     );
         
     glEnableVertexAttribArray(1);

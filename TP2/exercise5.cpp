@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
         GL_FLOAT, 
         GL_FALSE, 
         sizeof(Vertex2DUV), 
-        offsetof(Vertex2DUV, position)/*0*/
+        (const GLvoid*) offsetof(Vertex2DUV, position)/*0*/
     );
         
     glEnableVertexAttribArray(1);

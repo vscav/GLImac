@@ -99,7 +99,7 @@ int main(int argc, char** argv) {
 
     // Get uniforms location
     GLint uModelMatrixLocation = glGetUniformLocation(programId, "uModelMatrix");
-    GLint textureLocation = glGetUniformLocation(program.getGLId(), "uTexture");
+    GLint textureLocation = glGetUniformLocation(programId, "uTexture");
     glUniform1i(textureLocation, 0);
 
     std::cout << "OpenGL Version : " << glGetString(GL_VERSION) << std::endl;
@@ -135,6 +135,7 @@ int main(int argc, char** argv) {
     // Activation of vertex attributs
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
+    // Define 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(
         0, 
@@ -142,7 +143,7 @@ int main(int argc, char** argv) {
         GL_FLOAT, 
         GL_FALSE, 
         sizeof(Vertex2DUV), 
-        offsetof(Vertex2DUV, position)/*0*/
+        (const GLvoid*) offsetof(Vertex2DUV, position)/*0*/
     );
         
     glEnableVertexAttribArray(1);
@@ -183,7 +184,7 @@ int main(int argc, char** argv) {
         // Bind vao
         glBindVertexArray(vao);
 
-         // Apply to uniform variable uModelMatrix
+        // Apply to uniform variable uModelMatrix
         glUniformMatrix3fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(rotate(clockwise/2) * translate(0.5, 0.5) * scale(0.25, 0.25) * rotate(clockwise)));
 
         // Drawing call
