@@ -1,9 +1,11 @@
 #include <glimac/SDLWindowManager.hpp>
 #include <GL/glew.h>
 #include <iostream>
+
 #include <glimac/Program.hpp>
 #include <glimac/FilePath.hpp>
 #include <glimac/Sphere.hpp>
+#include <glimac/Image.hpp>
 
 using namespace glimac;
 
@@ -25,7 +27,7 @@ int main(int argc, char** argv) {
     FilePath applicationPath(argv[0]);
     Program program = loadProgram(
         applicationPath.dirPath() + "shaders/3D.vs.glsl",
-        applicationPath.dirPath() + "shaders/normals.fs.glsl"
+        applicationPath.dirPath() + "shaders/multiTex3D.fs.glsl"
     );
     // Make sure the program use them
     program.use();
@@ -37,9 +39,91 @@ int main(int argc, char** argv) {
     GLint MVPMatrixLocation = glGetUniformLocation(programId, "uMVPMatrix");
     GLint MVMatrixLocation = glGetUniformLocation(programId, "uMVMatrix");
     GLint NormalMatrixLocation = glGetUniformLocation(programId, "uNormalMatrix");
+    GLint uTextureLocation = glGetUniformLocation(programId, "uTexture");
+    GLint uSecondTexture = glGetUniformLocation(program.getGLId(), "uSecondTexture");
+
+    // Use to know on which unit the first texture (here: planet earth texture) can be read by OpenGL
+    glUniform1i(uTextureLocation, 0);
+    // Use to know on which unit the second texture (here: cloud texture) can be read by OpenGL
+    glUniform1i(uSecondTexture, 1);
 
     // Activate GPU's depth test
     glEnable(GL_DEPTH_TEST);
+
+    // Load textures (absolute path to the texture files)
+    std::unique_ptr<Image> planetEarthTexture = loadImage("/home/vincent/Documents/Github/GLImac/assets/textures/EarthMap.jpg");
+    std::unique_ptr<Image> moonTexture = loadImage("/home/vincent/Documents/Github/GLImac/assets/textures/MoonMap.jpg");
+    std::unique_ptr<Image> cloudTexture = loadImage("/home/vincent/Documents/Github/GLImac/assets/textures/CloudMap.jpg");
+
+    if (planetEarthTexture == NULL) {
+        std::cout << "Planet Earth texture unique ptr is null. Exit program." << std::endl;
+        return 0;
+    }
+
+    if (moonTexture == NULL) {
+        std::cout << "Moon texture unique ptr is null. Exit program." << std::endl;
+        return 0;
+    }
+
+    if (cloudTexture == NULL) {
+        std::cout << "Cloud texture unique ptr is null. Exit program." << std::endl;
+        return 0;
+    }
+
+    // Number of textures used
+    unsigned int texturesCount = 3;
+
+    // Generate textures
+    GLuint *textures = new GLuint[texturesCount];
+    glGenTextures(texturesCount, textures);
+
+    // Bind the first texture
+    glBindTexture(GL_TEXTURE_2D, textures[0]);
+    glTexImage2D(GL_TEXTURE_2D,
+		0,
+		GL_RGBA,
+		planetEarthTexture->getWidth(),
+		planetEarthTexture->getHeight(),
+		0,
+		GL_RGBA,
+		GL_FLOAT,
+		planetEarthTexture->getPixels());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Unbind
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Bind the second texture
+    glBindTexture(GL_TEXTURE_2D, textures[1]);
+    glTexImage2D(GL_TEXTURE_2D,
+		0,
+		GL_RGBA,
+		moonTexture->getWidth(),
+		moonTexture->getHeight(),
+		0,
+		GL_RGBA,
+		GL_FLOAT,
+		moonTexture->getPixels());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Unbind
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Bind the third texture
+    glBindTexture(GL_TEXTURE_2D, textures[2]);
+    glTexImage2D(GL_TEXTURE_2D,
+		0,
+		GL_RGBA,
+		cloudTexture->getWidth(),
+		cloudTexture->getHeight(),
+		0,
+		GL_RGBA,
+		GL_FLOAT,
+		cloudTexture->getPixels());
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Unbind
+	glBindTexture(GL_TEXTURE_2D, 0);
 
     glm::mat4 ProjMatrix = glm::perspective(glm::radians(70.f), 800 / 600.f, 0.1f, 100.f);
     glm::mat4 MVMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, -5));
@@ -133,6 +217,10 @@ int main(int argc, char** argv) {
         // Clean the depth buffer on each loop
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // Planet Earth transformations
+        MVMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, -5)); // Translation
+		MVMatrix = glm::rotate(MVMatrix, windowManager.getTime(), glm::vec3(0, 1, 0)); // Translation * Rotation
+
         // Send matrices to the GPU
         glUniformMatrix4fv(MVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(ProjMatrix * MVMatrix));
         glUniformMatrix4fv(MVMatrixLocation, 1, GL_FALSE, glm::value_ptr(MVMatrix));
@@ -140,36 +228,30 @@ int main(int argc, char** argv) {
 
         // Bind the VAO
         glBindVertexArray(vao);
+
+        // Bind the planet earth texture on the GL_TEXTURE0 unit
+        glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textures[0]);
+        // Bind the cloud texture on the GL_TEXTURE0 unit
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, textures[2]);
+
         // Drawing call
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
+
         // Unbind the VAO
         glBindVertexArray(0);
 
-        // 1°) Static small moon on the leftside
-        // glm::mat4 MVMatrix = glm::translate(glm::mat4(1), glm::vec3(-2, 0, -5)); // Translation
-        // MVMatrix = glm::scale(MVMatrix, glm::vec3(0.2, 0.2, 0.2)); // Translation * Scale
-        // Bind the VAO
-        // glBindVertexArray(vao);
-        // // Drawing call
-        // glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
-        // // Unbind the VAO
-        // glBindVertexArray(0);
-
-        // 2°) Small moon moving around the earth
-        // glm::mat4 MVMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, -5)); // Translation
-        // MVMatrix = glm::rotate(MVMatrix, windowManager.getTime(), glm::vec3(0, 1, 0)); // Translation * Rotation
-        // MVMatrix = glm::translate(MVMatrix, glm::vec3(-2, 0, 0)); // Translation * Rotation * Translation
-        // MVMatrix = glm::scale(MVMatrix, glm::vec3(0.2, 0.2, 0.2)); // Translation * Rotation * Translation * Scale
-		// Bind the VAO
-        // glBindVertexArray(vao);
-        // // Drawing call
-        // glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
-        // // Unbind the VAO
-        // glBindVertexArray(0);
-
-        // 3°) 32 moons moving around the earth
         // Bind the VAO
         glBindVertexArray(vao);
+
+        // Bind the moon texture
+        glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textures[1]);
+
+        // glActiveTexture(GL_TEXTURE1);
+		// glBindTexture(GL_TEXTURE_2D, 0); // débind sur l'unité GL_TEXTURE1
+
         for(unsigned int i = 0; i < moonCount; i++) {
             // Moons transformation
             glm::mat4 MVMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, -5)); // Translation
@@ -185,6 +267,11 @@ int main(int argc, char** argv) {
             // Drawing call
             glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
         }
+
+        // Unbind the texture on the GL_TEXTURE0 unit
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+
         // Unbind the VAO
         glBindVertexArray(0);
 
@@ -192,8 +279,9 @@ int main(int argc, char** argv) {
         windowManager.swapBuffers();
     }
 
-    glDeleteBuffers(1, &vbo);
     glDeleteVertexArrays(1, &vao);
+    glDeleteBuffers(1, &vbo);
+    delete textures;
 
     return EXIT_SUCCESS;
 }
