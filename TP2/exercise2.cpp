@@ -43,6 +43,7 @@ int main(int argc, char** argv)
         applicationPath.dirPath() + "shaders/" + argv[1],
         applicationPath.dirPath() + "shaders/" + argv[2]
     );
+    // Make the program use them
     program.use();
 
     std::cout << "OpenGL Version : " << glGetString(GL_VERSION) << std::endl;

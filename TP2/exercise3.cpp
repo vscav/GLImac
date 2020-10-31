@@ -25,6 +25,7 @@ int main(int argc, char** argv)
         applicationPath.dirPath() + "shaders/mandelbrot.vs.glsl",
         applicationPath.dirPath() + "shaders/mandelbrot.fs.glsl"
     );
+    // Make the program use them
     program.use();
 
     std::cout << "OpenGL Version : " << glGetString(GL_VERSION) << std::endl;

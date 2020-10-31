@@ -43,6 +43,7 @@ int main(int argc, char** argv)
         applicationPath.dirPath() + "shaders/color2D.vs.glsl",
         applicationPath.dirPath() + "shaders/color2D.fs.glsl"
     );
+    // Make the program use them
     program.use();
 
     std::cout << "OpenGL Version : " << glGetString(GL_VERSION) << std::endl;

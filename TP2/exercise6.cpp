@@ -30,14 +30,14 @@ glm::mat3 scale(float sx, float sy) {
     return M;
 }
 
-float anticlockwise = 0.0;
-float clockwise = 0.0;
-
 glm::mat3 rotate(float a) {
     float aRad = glm::radians(a);
     glm::mat3 M = glm::mat3(glm::vec3(cos(aRad), sin(aRad), 0), glm::vec3(-sin(aRad), cos(aRad), 0), glm::vec3(0, 0, 1));
     return M;
 }
+
+float anticlockwise = 0.0;
+float clockwise = 0.0;
 
 int main(int argc, char** argv) {
     // Initialize SDL and open a window
@@ -53,13 +53,16 @@ int main(int argc, char** argv) {
     // Load shaders
     FilePath applicationPath(argv[0]);
     Program program = loadProgram(
-        applicationPath.dirPath() + "shaders/tex2D-v2.vs.glsl",
-        applicationPath.dirPath() + "shaders/tex2D.fs.glsl"
+        applicationPath.dirPath() + "shaders/tex2D-exercise6.vs.glsl",
+        applicationPath.dirPath() + "shaders/tex2D-exercise6.fs.glsl"
     );
+    // Make the program use them
     program.use();
 
+    // Get program's ID
     const GLuint programId = program.getGLId();
 
+    // Get uniforms location
     GLint uModelMatrixLocation = glGetUniformLocation(programId, "uModelMatrix");
     GLint uColorLocation = glGetUniformLocation(programId, "uColor");
 
@@ -135,35 +138,35 @@ int main(int argc, char** argv) {
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Update rotating values
-        anticlockwise -= 0.15;
-        clockwise += 0.15;
+        anticlockwise -= 0.025;
+        clockwise += 0.025;
 
         // Bind vao
         glBindVertexArray(vao);
 
          // Apply to uniform variable uModelMatrix and uColor
-        glUniformMatrix3fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(translate(0.5, 0.5) * scale(0.25, 0.25) * rotate(clockwise)));
+        glUniformMatrix3fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(rotate(clockwise/2) * translate(0.5, 0.5) * scale(0.25, 0.25) * rotate(clockwise)));
         glUniform3fv(uColorLocation, 1, glm::value_ptr(glm::vec3(0.5, 0.5, 0.9)));
 
         // Drawing call
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // Apply to uniform variable uModelMatrix and uColor
-        glUniformMatrix3fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(translate(0.5, -0.5) * scale(0.25, 0.25) * rotate(anticlockwise)));
+        glUniformMatrix3fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(rotate(clockwise/2) * translate(0.5, -0.5) * scale(0.25, 0.25) * rotate(anticlockwise)));
         glUniform3fv(uColorLocation, 1, glm::value_ptr(glm::vec3(0.8, 0.5, 0.1)));
 
         // Drawing call
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // Apply to uniform variable uModelMatrix and uColor
-        glUniformMatrix3fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(translate(-0.5, -0.5) * scale(0.25, 0.25) * rotate(clockwise)));
+        glUniformMatrix3fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(rotate(clockwise/2) * translate(-0.5, -0.5) * scale(0.25, 0.25) * rotate(clockwise)));
         glUniform3fv(uColorLocation, 1, glm::value_ptr(glm::vec3(1.0, 1.0, 0.8)));
 
         // Drawing call
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // Apply to uniform variable uModelMatrix and uColor
-        glUniformMatrix3fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(translate(-0.5, 0.5) * scale(0.25, 0.25) * rotate(anticlockwise)));
+        glUniformMatrix3fv(uModelMatrixLocation, 1, GL_FALSE, glm::value_ptr(rotate(clockwise/2) * translate(-0.5, 0.5) * scale(0.25, 0.25) * rotate(anticlockwise)));
         glUniform3fv(uColorLocation, 1, glm::value_ptr(glm::vec3(0.1, 0.9, 0.6)));
 
         // Drawing call

@@ -36,15 +36,17 @@ int main(int argc, char** argv) {
     // Load shaders
     FilePath applicationPath(argv[0]);
     Program program = loadProgram(
-        applicationPath.dirPath() + "shaders/tex2D.vs.glsl",
-        applicationPath.dirPath() + "shaders/tex2D.fs.glsl"
+        applicationPath.dirPath() + "shaders/tex2D-exercise4.vs.glsl",
+        applicationPath.dirPath() + "shaders/tex2D-exercise4.fs.glsl"
     );
+    // Make the program use them
     program.use();
 
+    // Get program's ID
     const GLuint programId = program.getGLId();
 
+    // Get uniforms location
     GLint uniformLocation = glGetUniformLocation(programId, "uTime");
-
     glUniform1f(uniformLocation, uTime);
 
     std::cout << "OpenGL Version : " << glGetString(GL_VERSION) << std::endl;

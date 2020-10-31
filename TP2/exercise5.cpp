@@ -52,13 +52,16 @@ int main(int argc, char** argv) {
     // Load shaders
     FilePath applicationPath(argv[0]);
     Program program = loadProgram(
-        applicationPath.dirPath() + "shaders/tex2D-v2.vs.glsl",
-        applicationPath.dirPath() + "shaders/tex2D.fs.glsl"
+        applicationPath.dirPath() + "shaders/tex2D-exercise5.vs.glsl",
+        applicationPath.dirPath() + "shaders/tex2D-exercise5.fs.glsl"
     );
+    // Make the program use them
     program.use();
 
+    // Get program's ID
     const GLuint programId = program.getGLId();
 
+    // Get uniform's location
     GLint uniformLocation = glGetUniformLocation(programId, "uModelMatrix");
 
     std::cout << "OpenGL Version : " << glGetString(GL_VERSION) << std::endl;
