@@ -218,13 +218,13 @@ int main(int argc, char** argv) {
 
     // Get a certain amount of random transformation (rotation) axes
     unsigned int moonCount = 32;
-	std::vector<glm::vec3> randomTransforms;
+	std::vector<glm::vec3> randomTransform;
 	for (unsigned int i = 0; i < moonCount; i++)
-		randomTransforms.push_back(glm::sphericalRand(2.f));
+		randomTransform.push_back(glm::sphericalRand(2.f));
 
     // Application loop:
-    bool done = false;
-    while(!done) {
+	bool done = false;
+	while(!done) {
         // Event loop:
         SDL_Event e;
         while(windowManager.pollEvent(e)) {
@@ -234,82 +234,90 @@ int main(int argc, char** argv) {
         }
 
         // Clean the depth buffer on each loop
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Tell OpenGL to use the earthProgram
-        earthProgram.m_Program.use();
+		earthProgram.m_Program.use();
 
         // Use to know on which unit the planet earth texture can be read by OpenGL
-        glUniform1i(earthProgram.uEarthTexture, 0);
+		glUniform1i(earthProgram.uEarthTexture, 0);
         // Use to know on which unit the cloud texture can be read by OpenGL
-        glUniform1i(earthProgram.uCloudTexture, 1);
-
-        glm::mat4 globalMVMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0, 0, -5));
+		glUniform1i(earthProgram.uCloudTexture, 1);
 
         // Planet Earth transformations
-        glm::mat4 earthMVMatrix = glm::rotate(globalMVMatrix, windowManager.getTime(), glm::vec3(0, 1, 0));
+		glm::mat4 earthMVMatrix = glm::rotate(MVMatrix, windowManager.getTime(), glm::vec3(0, 1, 0)); // Translation * Rotation
 
         // Send matrices to the GPU
-        glUniformMatrix4fv(earthProgram.uMVMatrix, 1, GL_FALSE, 
-            glm::value_ptr(earthMVMatrix));
-        glUniformMatrix4fv(earthProgram.uNormalMatrix, 1, GL_FALSE, 
-            glm::value_ptr(glm::transpose(glm::inverse(earthMVMatrix))));
-        glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, 
-            glm::value_ptr(ProjMatrix * earthMVMatrix));
+		glUniformMatrix4fv(earthProgram.uMVMatrix, 1, GL_FALSE, 
+			glm::value_ptr(earthMVMatrix));
+		glUniformMatrix4fv(earthProgram.uNormalMatrix, 1, GL_FALSE, 
+			glm::value_ptr(glm::transpose(glm::inverse(earthMVMatrix))));
+		glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, 
+			glm::value_ptr(ProjMatrix * earthMVMatrix));
+
+		// Bind the VAO
+        glBindVertexArray(vao);
 
         // Bind the planet earth texture on the GL_TEXTURE0 unit
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textures[0]);
+		glBindTexture(GL_TEXTURE_2D, textures[0]);
         // Bind the cloud texture on the GL_TEXTURE1 unit
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, textures[2]);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, textures[2]);
 
-        // Drawing call
+		// Drawing call
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
-
-        // Unbind of GL_TEXTURE1
-        glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, 0);
-
-        // Tell OpenGL to use the moonProgram
-        moonProgram.m_Program.use();
-
-        for(unsigned int i = 0; i < moonCount; i++) {
-            // Moons transformation
-            glm::mat4 moonMVMatrix = glm::rotate(globalMVMatrix, (1+randomTransforms[i][0]+randomTransforms[i][1]+randomTransforms[i][2]) * windowManager.getTime(), glm::vec3(0, 1, 0)); // Translation * Rotation
-            moonMVMatrix = glm::translate(moonMVMatrix, randomTransforms[i]); // Translation * Rotation * Translation
-            moonMVMatrix = glm::scale(moonMVMatrix, glm::vec3(0.2, 0.2, 0.2)); // Translation * Rotation * Translation * Scale
-
-            // Send matrices to the GPU
-            glUniformMatrix4fv(moonProgram.uMVMatrix, 1, GL_FALSE, 
-                glm::value_ptr(moonMVMatrix));
-            glUniformMatrix4fv(moonProgram.uNormalMatrix, 1, GL_FALSE, 
-                glm::value_ptr(glm::transpose(glm::inverse(moonMVMatrix))));
-            glUniformMatrix4fv(moonProgram.uMVPMatrix, 1, GL_FALSE, 
-                glm::value_ptr(ProjMatrix * moonMVMatrix));
-
-            // Bind the moon texture on the GL_TEXTURE0 unit
-            glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, textures[1]);
-
-            // Drawing call
-            glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
-        }
-
-        // Unbind of GL_TEXTURE0 unit
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, 0);
 
         // Unbind the VAO
         glBindVertexArray(0);
 
-        // Update the display
-        windowManager.swapBuffers();
-    }
+        // Bind the VAO
+        glBindVertexArray(vao);
 
-    glDeleteVertexArrays(1, &vao);
-    glDeleteBuffers(1, &vbo);
-    delete textures;
+        // Unbind of GL_TEXTURE1
+        glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, 0);
+		
+		// Tell OpenGL to use the moonProgram 
+		moonProgram.m_Program.use();
 
-    return EXIT_SUCCESS;
+		for (int i = 0; i < moonCount; ++i)
+		{
+			// Moons transformation 
+			glm::mat4 moonMVMatrix = glm::rotate(MVMatrix, (1+randomTransform[i][0]+randomTransform[i][1]+randomTransform[i][2]) * windowManager.getTime(),glm::vec3(0, 1, 0)); // Translation * Rotation
+			moonMVMatrix = glm::translate(moonMVMatrix, randomTransform[i]); // Translation * Rotation * Translation
+			moonMVMatrix = glm::scale(moonMVMatrix, glm::vec3(0.2, 0.2, 0.2)); // Translation * Rotation * Translation * Scale
+
+            // Send matrices to the GPU            
+			glUniformMatrix4fv(moonProgram.uMVMatrix, 1, GL_FALSE, 
+				glm::value_ptr(moonMVMatrix));
+			glUniformMatrix4fv(moonProgram.uNormalMatrix, 1, GL_FALSE, 
+				glm::value_ptr(glm::transpose(glm::inverse(moonMVMatrix))));
+			glUniformMatrix4fv(moonProgram.uMVPMatrix, 1, GL_FALSE, 
+				glm::value_ptr(ProjMatrix * moonMVMatrix));
+
+            // Bind the moon texture on the GL_TEXTURE0 unit
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, textures[1]);
+            
+            // Drawing call
+			glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
+		}
+
+        // Unbind of GL_TEXTURE0 unit
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+        // Unbind the VAO
+        glBindVertexArray(0);
+
+		// Update the display
+		windowManager.swapBuffers();
+	}
+
+	glDeleteBuffers(1, &vbo);
+	glDeleteVertexArrays(1, &vao);
+	delete textures;
+
+	return EXIT_SUCCESS;
 }
