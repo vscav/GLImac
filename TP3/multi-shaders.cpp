@@ -9,6 +9,44 @@
 
 using namespace glimac;
 
+struct EarthProgram {
+    Program m_Program;
+
+    GLint uMVPMatrix;
+    GLint uMVMatrix;
+    GLint uNormalMatrix;
+    GLint uEarthTexture;
+    GLint uCloudTexture;
+
+    EarthProgram(const FilePath& applicationPath):
+        m_Program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
+                              applicationPath.dirPath() + "shaders/multiTex3D.fs.glsl")) {
+        uMVPMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVPMatrix");
+        uMVMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVMatrix");
+        uNormalMatrix = glGetUniformLocation(m_Program.getGLId(), "uNormalMatrix");
+        uEarthTexture = glGetUniformLocation(m_Program.getGLId(), "uEarthTexture");
+        uCloudTexture = glGetUniformLocation(m_Program.getGLId(), "uCloudTexture");
+    }
+};
+
+struct MoonProgram {
+    Program m_Program;
+
+    GLint uMVPMatrix;
+    GLint uMVMatrix;
+    GLint uNormalMatrix;
+    GLint uTexture;
+
+    MoonProgram(const FilePath& applicationPath):
+        m_Program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
+                              applicationPath.dirPath() + "shaders/tex3D.fs.glsl")) {
+        uMVPMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVPMatrix");
+        uMVMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVMatrix");
+        uNormalMatrix = glGetUniformLocation(m_Program.getGLId(), "uNormalMatrix");
+        uTexture = glGetUniformLocation(m_Program.getGLId(), "uTexture");
+    }
+};
+
 int main(int argc, char** argv) {
     // Initialize SDL and open a window
     SDLWindowManager windowManager(800, 600, "GLImac");
@@ -23,29 +61,10 @@ int main(int argc, char** argv) {
     std::cout << "OpenGL Version : " << glGetString(GL_VERSION) << std::endl;
     std::cout << "GLEW Version : " << glewGetString(GLEW_VERSION) << std::endl;
 
-    // Load shaders (relative to the current directory path)
-    FilePath applicationPath(argv[0]);
-    Program program = loadProgram(
-        applicationPath.dirPath() + "shaders/3D.vs.glsl",
-        applicationPath.dirPath() + "shaders/multiTex3D.fs.glsl"
-    );
-    // Make sure the program use them
-    program.use();
-
-    // Get program's ID
-    const GLuint programId = program.getGLId();
-
-    // Get uniforms location
-    GLint MVPMatrixLocation = glGetUniformLocation(programId, "uMVPMatrix");
-    GLint MVMatrixLocation = glGetUniformLocation(programId, "uMVMatrix");
-    GLint NormalMatrixLocation = glGetUniformLocation(programId, "uNormalMatrix");
-    GLint uEarthTextureLocation = glGetUniformLocation(programId, "uEarthTexture");
-    GLint uCloudTextureLocation = glGetUniformLocation(programId, "uCloudTexture");
-
-    // Use to know on which unit the first texture (here: planet earth texture) can be read by OpenGL
-    glUniform1i(uEarthTextureLocation, 0);
-    // Use to know on which unit the second texture (here: cloud texture) can be read by OpenGL
-    glUniform1i(uCloudTextureLocation, 1);
+    // Shaders
+	FilePath applicationPath(argv[0]);
+	EarthProgram earthProgram(applicationPath);
+	MoonProgram moonProgram(applicationPath);
 
     // Activate GPU's depth test
     glEnable(GL_DEPTH_TEST);
@@ -217,53 +236,61 @@ int main(int argc, char** argv) {
         // Clean the depth buffer on each loop
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // Tell OpenGL to use the earthProgram
+        earthProgram.m_Program.use();
+
+        // Use to know on which unit the planet earth texture can be read by OpenGL
+        glUniform1i(earthProgram.uEarthTexture, 0);
+        // Use to know on which unit the cloud texture can be read by OpenGL
+        glUniform1i(earthProgram.uCloudTexture, 1);
+
+        glm::mat4 globalMVMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0, 0, -5));
+
         // Planet Earth transformations
-        MVMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, -5)); // Translation
-		MVMatrix = glm::rotate(MVMatrix, windowManager.getTime(), glm::vec3(0, 1, 0)); // Translation * Rotation
+        glm::mat4 earthMVMatrix = glm::rotate(globalMVMatrix, windowManager.getTime(), glm::vec3(0, 1, 0));
 
         // Send matrices to the GPU
-        glUniformMatrix4fv(MVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(ProjMatrix * MVMatrix));
-        glUniformMatrix4fv(MVMatrixLocation, 1, GL_FALSE, glm::value_ptr(MVMatrix));
-        glUniformMatrix4fv(NormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(NormalMatrix));
-
-        // Bind the VAO
-        glBindVertexArray(vao);
+        glUniformMatrix4fv(earthProgram.uMVMatrix, 1, GL_FALSE, 
+            glm::value_ptr(earthMVMatrix));
+        glUniformMatrix4fv(earthProgram.uNormalMatrix, 1, GL_FALSE, 
+            glm::value_ptr(glm::transpose(glm::inverse(earthMVMatrix))));
+        glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, 
+            glm::value_ptr(ProjMatrix * earthMVMatrix));
 
         // Bind the planet earth texture on the GL_TEXTURE0 unit
         glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, textures[0]);
+        glBindTexture(GL_TEXTURE_2D, textures[0]);
         // Bind the cloud texture on the GL_TEXTURE1 unit
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, textures[2]);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, textures[2]);
 
         // Drawing call
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
-
-        // Unbind the VAO
-        glBindVertexArray(0);
-
-        // Bind the VAO
-        glBindVertexArray(vao);
 
         // Unbind of GL_TEXTURE1
         glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-        // Bind the moon texture
-        glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, textures[1]);
+        // Tell OpenGL to use the moonProgram
+        moonProgram.m_Program.use();
 
         for(unsigned int i = 0; i < moonCount; i++) {
             // Moons transformation
-            glm::mat4 MVMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, -5)); // Translation
-            MVMatrix = glm::rotate(MVMatrix, (1+randomTransforms[i][0]+randomTransforms[i][1]+randomTransforms[i][2]) * windowManager.getTime(), glm::vec3(0, 1, 0)); // Translation * Rotation
-            MVMatrix = glm::translate(MVMatrix, randomTransforms[i]); // Translation * Rotation * Translation
-            MVMatrix = glm::scale(MVMatrix, glm::vec3(0.2, 0.2, 0.2)); // Translation * Rotation * Translation * Scale
+            glm::mat4 moonMVMatrix = glm::rotate(globalMVMatrix, (1+randomTransforms[i][0]+randomTransforms[i][1]+randomTransforms[i][2]) * windowManager.getTime(), glm::vec3(0, 1, 0)); // Translation * Rotation
+            moonMVMatrix = glm::translate(moonMVMatrix, randomTransforms[i]); // Translation * Rotation * Translation
+            moonMVMatrix = glm::scale(moonMVMatrix, glm::vec3(0.2, 0.2, 0.2)); // Translation * Rotation * Translation * Scale
 
             // Send matrices to the GPU
-            glUniformMatrix4fv(MVPMatrixLocation, 1, GL_FALSE, glm::value_ptr(ProjMatrix * MVMatrix));
-            glUniformMatrix4fv(MVMatrixLocation, 1, GL_FALSE, glm::value_ptr(MVMatrix));
-            glUniformMatrix4fv(NormalMatrixLocation, 1, GL_FALSE, glm::value_ptr(NormalMatrix));
+            glUniformMatrix4fv(moonProgram.uMVMatrix, 1, GL_FALSE, 
+                glm::value_ptr(moonMVMatrix));
+            glUniformMatrix4fv(moonProgram.uNormalMatrix, 1, GL_FALSE, 
+                glm::value_ptr(glm::transpose(glm::inverse(moonMVMatrix))));
+            glUniformMatrix4fv(moonProgram.uMVPMatrix, 1, GL_FALSE, 
+                glm::value_ptr(ProjMatrix * moonMVMatrix));
+
+            // Bind the moon texture on the GL_TEXTURE0 unit
+            glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, textures[1]);
 
             // Drawing call
             glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
