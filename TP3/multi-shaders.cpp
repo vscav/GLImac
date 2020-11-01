@@ -280,9 +280,8 @@ int main(int argc, char** argv) {
         
         // Tell OpenGL to use the moonProgram 
         moonProgram.m_Program.use();
-
-		for (int i = 0; i < moonCount; ++i)
-		{
+        
+        for (int i = 0; i < moonCount; ++i) {
             // Moons transformation 
             glm::mat4 moonMVMatrix = glm::rotate(MVMatrix, (1+randomTransform[i][0]+randomTransform[i][1]+randomTransform[i][2]) * windowManager.getTime(),glm::vec3(0, 1, 0)); // Translation * Rotation
             moonMVMatrix = glm::translate(moonMVMatrix, randomTransform[i]); // Translation * Rotation * Translation
@@ -302,7 +301,8 @@ int main(int argc, char** argv) {
             
             // Drawing call
             glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
-		}
+            
+        }
         
         // Unbind of GL_TEXTURE0 unit
         glActiveTexture(GL_TEXTURE0);
