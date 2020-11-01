@@ -60,11 +60,11 @@ int main(int argc, char** argv) {
 
     std::cout << "OpenGL Version : " << glGetString(GL_VERSION) << std::endl;
     std::cout << "GLEW Version : " << glewGetString(GLEW_VERSION) << std::endl;
-
+    
     // Shaders
-	FilePath applicationPath(argv[0]);
-	EarthProgram earthProgram(applicationPath);
-	MoonProgram moonProgram(applicationPath);
+    FilePath applicationPath(argv[0]);
+    EarthProgram earthProgram(applicationPath);
+    MoonProgram moonProgram(applicationPath);
 
     // Activate GPU's depth test
     glEnable(GL_DEPTH_TEST);
