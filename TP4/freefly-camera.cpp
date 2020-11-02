@@ -6,7 +6,7 @@
 #include <glimac/FilePath.hpp>
 #include <glimac/Sphere.hpp>
 #include <glimac/Image.hpp>
-#include <glimac/TrackballCamera.hpp>
+#include <glimac/FreeflyCamera.hpp>
 
 using namespace glimac;
 
@@ -153,7 +153,7 @@ int main(int argc, char** argv) {
     Sphere sphere(1, 32, 16);
 
     // Create a trackball camera (using the default constructor)
-    TrackballCamera camera;
+    FreeflyCamera camera;
 
     // VBO creation
     GLuint vbo;
@@ -246,25 +246,27 @@ int main(int argc, char** argv) {
                 //     break;
                 case SDL_KEYDOWN:
                     switch(e.key.keysym.sym) {
-                        case SDLK_UP:
-                            std::cout << "Zoom in" << std::endl;
+                        case SDLK_z:
                             camera.moveFront(1.f);
                             break;
-                        case SDLK_DOWN:
-                            std::cout << "Zoom out" << std::endl;
+                        case SDLK_s:
                             camera.moveFront(-1.f);
                             break;
-                        default:
+                        case SDLK_q:
+                            camera.moveLeft(1.f);
                             break;
-                        }
+                        case SDLK_d:
+                            camera.moveLeft(-1.f);
+                            break;
+                    }
                 break;
 				case SDL_MOUSEMOTION:
                     if (windowManager.isMouseButtonPressed(SDL_BUTTON_LEFT)) {
                         if (e.motion.xrel != 0) {
-                            camera.rotateUp(e.motion.xrel / 1.5f);
+                            camera.rotateLeft(-e.motion.xrel / 1.5f);
                         }
                         if (e.motion.yrel != 0) {
-                            camera.rotateLeft(e.motion.yrel / 1.5f);
+                            camera.rotateUp(-e.motion.yrel / 1.5f);
                         }
                         break;
 					}
