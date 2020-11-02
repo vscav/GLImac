@@ -21,17 +21,17 @@ void TrackballCamera::rotateUp(const float degrees) {
 }
 
 glm::mat4 TrackballCamera::getViewMatrix() const {
-	// Declare a ViewMatrix
+    // Declare a ViewMatrix
 	glm::mat4 ViewMatrix = glm::mat4();
-
-    // Move the scene back along the z axis (distance: m_fDistance)
+	
+	// Move the scene back along the z axis (distance: m_fDistance)
 	ViewMatrix = glm::translate(ViewMatrix, glm::vec3(0, 0, m_fDistance));
-
-    // Rotate the scene around the x axis (angle: m_fAngleX)
+	
+	// Rotate the scene around the x axis (angle: m_fAngleX)
 	ViewMatrix = glm::rotate(ViewMatrix, glm::radians(m_fAngleX), glm::vec3(1, 0, 0));
-
-    // Rotate the scene around the y axis (angle: m_fAngleY)
+	
+	// Rotate the scene around the y axis (angle: m_fAngleY)
 	ViewMatrix = glm::rotate(ViewMatrix, glm::radians(m_fAngleY), glm::vec3(0, 1, 0));
-
+	
 	return ViewMatrix;
 }
