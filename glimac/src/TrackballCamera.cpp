@@ -1,3 +1,4 @@
+#include <glimac/SDLWindowManager.hpp>
 #include "glimac/TrackballCamera.hpp"
 
 TrackballCamera::TrackballCamera()
@@ -20,8 +21,8 @@ void TrackballCamera::rotateUp(const float degrees) {
 }
 
 glm::mat4 TrackballCamera::getViewMatrix() const {
-    // Declare a ViewMatrix
-    glm::mat4 ViewMatrix = glm::mat4();
+	// Declare a ViewMatrix
+	glm::mat4 ViewMatrix = glm::mat4();
 
     // Move the scene back along the z axis (distance: m_fDistance)
 	ViewMatrix = glm::translate(ViewMatrix, glm::vec3(0, 0, m_fDistance));

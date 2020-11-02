@@ -14,5 +14,5 @@ class TrackballCamera {
         void rotateLeft(float degrees);
         void rotateUp(float degrees);
 
-        glm::mat4 getViewMatrix() const
+        glm::mat4 getViewMatrix() const;
 };

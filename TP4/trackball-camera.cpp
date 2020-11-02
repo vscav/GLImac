@@ -6,6 +6,7 @@
 #include <glimac/FilePath.hpp>
 #include <glimac/Sphere.hpp>
 #include <glimac/Image.hpp>
+#include <glimac/TrackballCamera.hpp>
 
 using namespace glimac;
 
@@ -151,6 +152,9 @@ int main(int argc, char** argv) {
     // Create a sphere (using glimac class Sphere)
     Sphere sphere(1, 32, 16);
 
+    // Create a trackball camera (using the default constructor)
+    TrackballCamera camera;
+
     // VBO creation
     GLuint vbo;
     glGenBuffers(1, &vbo);
@@ -228,10 +232,44 @@ int main(int argc, char** argv) {
         // Event loop:
         SDL_Event e;
         while(windowManager.pollEvent(e)) {
-            if(e.type == SDL_QUIT) {
-                done = true; // Leave the loop after this iteration
-            }
-        }
+			switch (e.type) {
+				case SDL_QUIT:
+					done = true;
+					break;
+                // case SDL_MOUSEWHEEL:
+                //     // scroll up
+                //     if(e.wheel.y > 0)
+                //         std::cout << "Scroll up" << std::endl;
+                //     // scroll down
+                //     else if(e.wheel.y < 0)
+                //         std::cout << "Scroll down" << std::endl;
+                //     break;
+                case SDL_KEYDOWN:
+                    switch(e.key.keysym.sym) {
+                        case SDLK_UP:
+                            std::cout << "Zoom in" << std::endl;
+                            camera.moveFront(1.f);
+                            break;
+                        case SDLK_DOWN:
+                            std::cout << "Zoom out" << std::endl;
+                            camera.moveFront(-1.f);
+                            break;
+                        default:
+                            break;
+                        }
+                break;
+				case SDL_MOUSEMOTION:
+                    if (windowManager.isMouseButtonPressed(SDL_BUTTON_LEFT)) {
+                        if (e.motion.xrel != 0)
+                            camera.rotateUp(e.motion.xrel / 1.5f);
+                        if (e.motion.yrel != 0)
+                            camera.rotateLeft(e.motion.yrel / 1.5f);
+                        break;
+					}
+				default:
+					break;
+			}
+		}
 
         // Clean the depth buffer on each loop
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -243,6 +281,9 @@ int main(int argc, char** argv) {
 		glUniform1i(earthProgram.uEarthTexture, 0);
         // Use to know on which unit the cloud texture can be read by OpenGL
 		glUniform1i(earthProgram.uCloudTexture, 1);
+
+        // Get the ViewMatrix
+        MVMatrix = camera.getViewMatrix();
 
         // Planet Earth transformations
 		glm::mat4 earthMVMatrix = glm::rotate(MVMatrix, windowManager.getTime(), glm::vec3(0, 1, 0)); // Translation * Rotation
