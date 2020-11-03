@@ -70,7 +70,7 @@ $ cmake ../GLImac && make
 Run an executable by using this pattern :
 
 ```
-$ ../GLImac-subdirectory-name/GLImac-subdirectory-name_executable-file-name
+$ ./GLImac-subdirectory-name/GLImac-subdirectory-name_executable-file-name
 ```
 
 ## Resources
