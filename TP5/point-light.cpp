@@ -21,7 +21,7 @@ struct EarthProgram {
 
     EarthProgram(const FilePath& applicationPath):
         m_Program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
-                              applicationPath.dirPath() + "shaders/directionallight.fs.glsl")) {
+                              applicationPath.dirPath() + "shaders/pointlight.fs.glsl")) {
         uMVPMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVPMatrix");
         uMVMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVMatrix");
         uNormalMatrix = glGetUniformLocation(m_Program.getGLId(), "uNormalMatrix");
@@ -40,7 +40,7 @@ struct MoonProgram {
 
     MoonProgram(const FilePath& applicationPath):
         m_Program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
-                              applicationPath.dirPath() + "shaders/directionallight.fs.glsl")) {
+                              applicationPath.dirPath() + "shaders/pointlight.fs.glsl")) {
         uMVPMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVPMatrix");
         uMVMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVMatrix");
         uNormalMatrix = glGetUniformLocation(m_Program.getGLId(), "uNormalMatrix");
@@ -68,10 +68,10 @@ int main(int argc, char** argv) {
     MoonProgram moonProgram(applicationPath);
 
     Program program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
-								applicationPath.dirPath() + "shaders/directionallight.fs.glsl"));
+								applicationPath.dirPath() + "shaders/pointlight.fs.glsl"));
 
 	GLint uLightIntensity = glGetUniformLocation(program.getGLId(), "uLightIntensity");
-	GLint uLightDir_vs = glGetUniformLocation(program.getGLId(), "uLightDir_vs");
+	GLint uLightPos_vs = glGetUniformLocation(program.getGLId(), "uLightPos_vs");
 	GLint uKd = glGetUniformLocation(program.getGLId(), "uKd");
 	GLint uKs = glGetUniformLocation(program.getGLId(), "uKs");
 	GLint uShininess = glGetUniformLocation(program.getGLId(), "uShininess");
@@ -217,6 +217,11 @@ int main(int argc, char** argv) {
         
         // Tell OpenGL to use the earthProgram
         earthProgram.m_Program.use();
+        
+        // Use to know on which unit the planet earth texture can be read by OpenGL
+        glUniform1i(earthProgram.uEarthTexture, 0);
+        // Use to know on which unit the cloud texture can be read by OpenGL
+		glUniform1i(earthProgram.uCloudTexture, 1);
 
         // Get the ViewMatrix
         MVMatrix = camera.getViewMatrix();
@@ -228,14 +233,12 @@ int main(int argc, char** argv) {
         glUniformMatrix4fv(earthProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(earthMVMatrix));
         glUniformMatrix4fv(earthProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(earthMVMatrix))));
         glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * earthMVMatrix));
-        // And apply light rotation
-        glm::mat4 lightMVMatrix = glm::rotate(MVMatrix, windowManager.getTime(),glm::vec3(0, 1, 0)); // Translation * Rotation
-        glm::vec3 lightDir_vs(lightMVMatrix * glm::vec4(1, 1, 1, 0)); 
+        glm::vec3 lightPos_vs(MVMatrix * glm::vec4(1, 1, 1, 0)); 
         glUniform3f(uLightIntensity, 1, .5f, .5f);
-        glUniform3fv(uLightDir_vs, 1, glm::value_ptr(lightDir_vs));
-        glUniform3f(uKd, 0, 0, 1);
-        glUniform3f(uKs, 0.85, 0, 1);
-        glUniform1f(uShininess, 2);
+        glUniform3fv(uLightPos_vs, 1, glm::value_ptr(lightPos_vs));
+        glUniform3f(uKd, 1, 0, 1);
+        glUniform3f(uKs, 0, 0, 1);
+        glUniform1f(uShininess, 5);
 
         // Bind the VAO
         glBindVertexArray(vao);
@@ -243,8 +246,21 @@ int main(int argc, char** argv) {
         // Drawing call
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
         
-        // Unbind the VAO
-        glBindVertexArray(0);
+		// Sphere as the main light
+		glm::mat4 lightMVMatrix = glm::scale(MVMatrix, glm::vec3(0, 3, 3)); // Translation * Rotation * Translation * Scale
+        
+        // Send matrices to the GPU
+        glUniformMatrix4fv(earthProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(lightMVMatrix));
+        glUniformMatrix4fv(earthProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(lightMVMatrix))));
+        glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * lightMVMatrix));
+		glUniform3f(uLightIntensity, 1, 1, 1);
+		glUniform3fv(uLightPos_vs, 1, glm::value_ptr(lightPos_vs));
+		glUniform3f(uKd, 1,  1, 1);
+		glUniform3f(uKs, 1, 1, 1);
+		glUniform1f(uShininess, 6);
+
+		// Drawing call
+		glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
         
         // Bind the VAO
         glBindVertexArray(vao);
@@ -263,7 +279,7 @@ int main(int argc, char** argv) {
             glUniformMatrix4fv(moonProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(moonMVMatrix))));
             glUniformMatrix4fv(moonProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * moonMVMatrix));
 			glUniform3f(uLightIntensity, .25, .25, .25);
-			glUniform3fv(uLightDir_vs, 1, glm::value_ptr(lightDir_vs));
+			glUniform3fv(uLightPos_vs, 1, glm::value_ptr(lightPos_vs));
 			glUniform3f(uKd, 0, 0, 0.85);
 			glUniform3f(uKs, 0, 0, 0.15);
 			glUniform1f(uShininess, 1);
