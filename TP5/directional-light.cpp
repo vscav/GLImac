@@ -69,12 +69,12 @@ int main(int argc, char** argv) {
 
     Program program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
 								applicationPath.dirPath() + "shaders/directionallight.fs.glsl"));
-
-	GLint uLightIntensity = glGetUniformLocation(program.getGLId(), "uLightIntensity");
-	GLint uLightDir_vs = glGetUniformLocation(program.getGLId(), "uLightDir_vs");
-	GLint uKd = glGetUniformLocation(program.getGLId(), "uKd");
-	GLint uKs = glGetUniformLocation(program.getGLId(), "uKs");
-	GLint uShininess = glGetUniformLocation(program.getGLId(), "uShininess");
+                                
+    GLint uLightIntensity = glGetUniformLocation(program.getGLId(), "uLightIntensity");
+    GLint uLightDir_vs = glGetUniformLocation(program.getGLId(), "uLightDir_vs");
+    GLint uKd = glGetUniformLocation(program.getGLId(), "uKd");
+    GLint uKs = glGetUniformLocation(program.getGLId(), "uKs");
+    GLint uShininess = glGetUniformLocation(program.getGLId(), "uShininess");
 
     // Activate GPU's depth test
     glEnable(GL_DEPTH_TEST);
@@ -262,11 +262,11 @@ int main(int argc, char** argv) {
             glUniformMatrix4fv(moonProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(moonMVMatrix));
             glUniformMatrix4fv(moonProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(moonMVMatrix))));
             glUniformMatrix4fv(moonProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * moonMVMatrix));
-			glUniform3f(uLightIntensity, .25, .25, .25);
-			glUniform3fv(uLightDir_vs, 1, glm::value_ptr(lightDir_vs));
-			glUniform3f(uKd, 0, 0, 0.85);
-			glUniform3f(uKs, 0, 0, 0.15);
-			glUniform1f(uShininess, 1);
+            glUniform3f(uLightIntensity, .25, .25, .25);
+            glUniform3fv(uLightDir_vs, 1, glm::value_ptr(lightDir_vs));
+            glUniform3f(uKd, 0, 0, 0.85);
+            glUniform3f(uKs, 0, 0, 0.15);
+            glUniform1f(uShininess, 1);
             
             // Drawing call
             glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
