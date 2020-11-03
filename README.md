@@ -62,7 +62,7 @@ $ mkdir GLImac-build && cd GLImac-build
 Build and compile GLImac :
 
 ```
-$ cmake ../GLImac-Template && make
+$ cmake ../GLImac && make
 ```
 
 Run an executable by using this pattern :
