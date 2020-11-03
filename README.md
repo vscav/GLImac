@@ -1,4 +1,6 @@
-# GLImac - OpenGL 3+ practical course.
+# GLImac
+
+> OpenGL 3+ practical course.
 
 ## Linux installation
 
