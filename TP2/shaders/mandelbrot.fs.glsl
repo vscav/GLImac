@@ -5,7 +5,7 @@ precision mediump float;
 in vec2 vFragPosition;
 in vec3 vFragColor;
 
-out vec2 fFragPosition;
+// out vec2 fFragPosition;
 out vec3 fFragColor;
 
 void main() {

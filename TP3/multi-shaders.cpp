@@ -218,9 +218,9 @@ int main(int argc, char** argv) {
 
     // Get a certain amount of random transformation (rotation) axes
     unsigned int moonCount = 32;
-	std::vector<glm::vec3> randomTransform;
+	std::vector<glm::vec3> randomTransforms;
 	for (unsigned int i = 0; i < moonCount; i++)
-		randomTransform.push_back(glm::sphericalRand(2.f));
+		randomTransforms.push_back(glm::sphericalRand(2.f));
 
     // Application loop:
 	bool done = false;
@@ -248,12 +248,9 @@ int main(int argc, char** argv) {
         glm::mat4 earthMVMatrix = glm::rotate(MVMatrix, windowManager.getTime(), glm::vec3(0, 1, 0)); // Translation * Rotation
         
         // Send matrices to the GPU
-        glUniformMatrix4fv(earthProgram.uMVMatrix, 1, GL_FALSE, 
-			glm::value_ptr(earthMVMatrix));
-        glUniformMatrix4fv(earthProgram.uNormalMatrix, 1, GL_FALSE, 
-			glm::value_ptr(glm::transpose(glm::inverse(earthMVMatrix))));
-        glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, 
-			glm::value_ptr(ProjMatrix * earthMVMatrix));
+        glUniformMatrix4fv(earthProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(earthMVMatrix));
+        glUniformMatrix4fv(earthProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(earthMVMatrix))));
+        glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * earthMVMatrix));
             
         // Bind the VAO
         glBindVertexArray(vao);
@@ -283,17 +280,14 @@ int main(int argc, char** argv) {
         
         for (int i = 0; i < moonCount; ++i) {
             // Moons transformation 
-            glm::mat4 moonMVMatrix = glm::rotate(MVMatrix, (1+randomTransform[i][0]+randomTransform[i][1]+randomTransform[i][2]) * windowManager.getTime(),glm::vec3(0, 1, 0)); // Translation * Rotation
-            moonMVMatrix = glm::translate(moonMVMatrix, randomTransform[i]); // Translation * Rotation * Translation
+            glm::mat4 moonMVMatrix = glm::rotate(MVMatrix, (1 + randomTransforms[i][0]+randomTransforms[i][1]+randomTransforms[i][2]) * windowManager.getTime(),glm::vec3(0, 1, 0)); // Translation * Rotation
+            moonMVMatrix = glm::translate(moonMVMatrix, randomTransforms[i]); // Translation * Rotation * Translation
             moonMVMatrix = glm::scale(moonMVMatrix, glm::vec3(0.2, 0.2, 0.2)); // Translation * Rotation * Translation * Scale
             
             // Send matrices to the GPU            
-            glUniformMatrix4fv(moonProgram.uMVMatrix, 1, GL_FALSE, 
-				glm::value_ptr(moonMVMatrix));
-            glUniformMatrix4fv(moonProgram.uNormalMatrix, 1, GL_FALSE, 
-				glm::value_ptr(glm::transpose(glm::inverse(moonMVMatrix))));
-            glUniformMatrix4fv(moonProgram.uMVPMatrix, 1, GL_FALSE, 
-				glm::value_ptr(ProjMatrix * moonMVMatrix));
+            glUniformMatrix4fv(moonProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(moonMVMatrix));
+            glUniformMatrix4fv(moonProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(moonMVMatrix))));
+            glUniformMatrix4fv(moonProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * moonMVMatrix));
                 
             // Bind the moon texture on the GL_TEXTURE0 unit
             glActiveTexture(GL_TEXTURE0);

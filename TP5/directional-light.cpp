@@ -6,7 +6,7 @@
 #include <glimac/FilePath.hpp>
 #include <glimac/Sphere.hpp>
 #include <glimac/Image.hpp>
-#include <glimac/TrackballCamera.hpp>
+#include <glimac/FreeflyCamera.hpp>
 
 using namespace glimac;
 
@@ -21,7 +21,7 @@ struct EarthProgram {
 
     EarthProgram(const FilePath& applicationPath):
         m_Program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
-                              applicationPath.dirPath() + "shaders/multiTex3D.fs.glsl")) {
+                              applicationPath.dirPath() + "shaders/directionallight.fs.glsl")) {
         uMVPMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVPMatrix");
         uMVMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVMatrix");
         uNormalMatrix = glGetUniformLocation(m_Program.getGLId(), "uNormalMatrix");
@@ -40,7 +40,7 @@ struct MoonProgram {
 
     MoonProgram(const FilePath& applicationPath):
         m_Program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
-                              applicationPath.dirPath() + "shaders/tex3D.fs.glsl")) {
+                              applicationPath.dirPath() + "shaders/directionallight.fs.glsl")) {
         uMVPMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVPMatrix");
         uMVMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVMatrix");
         uNormalMatrix = glGetUniformLocation(m_Program.getGLId(), "uNormalMatrix");
@@ -67,83 +67,17 @@ int main(int argc, char** argv) {
     EarthProgram earthProgram(applicationPath);
     MoonProgram moonProgram(applicationPath);
 
+    Program program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
+								applicationPath.dirPath() + "shaders/directionallight.fs.glsl"));
+
+	GLint uLightIntensity = glGetUniformLocation(program.getGLId(), "uLightIntensity");
+	GLint uLightDir_vs = glGetUniformLocation(program.getGLId(), "uLightDir_vs");
+	GLint uKd = glGetUniformLocation(program.getGLId(), "uKd");
+	GLint uKs = glGetUniformLocation(program.getGLId(), "uKs");
+	GLint uShininess = glGetUniformLocation(program.getGLId(), "uShininess");
+
     // Activate GPU's depth test
     glEnable(GL_DEPTH_TEST);
-
-    // Load textures (absolute path to the texture files)
-    std::unique_ptr<Image> planetEarthTexture = loadImage("/home/vincent/Documents/Github/GLImac/assets/textures/EarthMap.jpg");
-    std::unique_ptr<Image> moonTexture = loadImage("/home/vincent/Documents/Github/GLImac/assets/textures/MoonMap.jpg");
-    std::unique_ptr<Image> cloudTexture = loadImage("/home/vincent/Documents/Github/GLImac/assets/textures/CloudMap.jpg");
-
-    if (planetEarthTexture == NULL) {
-        std::cout << "Planet Earth texture unique ptr is null. Exit program." << std::endl;
-        return 0;
-    }
-
-    if (moonTexture == NULL) {
-        std::cout << "Moon texture unique ptr is null. Exit program." << std::endl;
-        return 0;
-    }
-
-    if (cloudTexture == NULL) {
-        std::cout << "Cloud texture unique ptr is null. Exit program." << std::endl;
-        return 0;
-    }
-
-    // Number of textures used
-    unsigned int texturesCount = 3;
-
-    // Generate textures
-    GLuint *textures = new GLuint[texturesCount];
-    glGenTextures(texturesCount, textures);
-
-    // Bind the first texture
-    glBindTexture(GL_TEXTURE_2D, textures[0]);
-    glTexImage2D(GL_TEXTURE_2D,
-		0,
-		GL_RGBA,
-		planetEarthTexture->getWidth(),
-		planetEarthTexture->getHeight(),
-		0,
-		GL_RGBA,
-		GL_FLOAT,
-		planetEarthTexture->getPixels());
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // Unbind
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-    // Bind the second texture
-    glBindTexture(GL_TEXTURE_2D, textures[1]);
-    glTexImage2D(GL_TEXTURE_2D,
-		0,
-		GL_RGBA,
-		moonTexture->getWidth(),
-		moonTexture->getHeight(),
-		0,
-		GL_RGBA,
-		GL_FLOAT,
-		moonTexture->getPixels());
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // Unbind
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-    // Bind the third texture
-    glBindTexture(GL_TEXTURE_2D, textures[2]);
-    glTexImage2D(GL_TEXTURE_2D,
-		0,
-		GL_RGBA,
-		cloudTexture->getWidth(),
-		cloudTexture->getHeight(),
-		0,
-		GL_RGBA,
-		GL_FLOAT,
-		cloudTexture->getPixels());
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // Unbind
-	glBindTexture(GL_TEXTURE_2D, 0);
 
     glm::mat4 ProjMatrix = glm::perspective(glm::radians(70.f), 800 / 600.f, 0.1f, 100.f);
     glm::mat4 MVMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, -5));
@@ -153,7 +87,7 @@ int main(int argc, char** argv) {
     Sphere sphere(1, 32, 16);
 
     // Create a trackball camera (using the default constructor)
-    TrackballCamera camera;
+    FreeflyCamera camera;
 
     // VBO creation
     GLuint vbo;
@@ -223,8 +157,11 @@ int main(int argc, char** argv) {
     // Get a certain amount of random transformation (rotation) axes
     unsigned int moonCount = 32;
 	std::vector<glm::vec3> randomTransforms;
-	for (unsigned int i = 0; i < moonCount; i++)
-		randomTransforms.push_back(glm::sphericalRand(2.f));
+    std::vector<float> randomColors;
+	for (unsigned int i = 0; i < moonCount; i++) {
+        randomTransforms.push_back(glm::sphericalRand(2.f));
+        randomColors.push_back(glm::linearRand(.1f, 1.f));
+    }
 
     // Application loop:
 	bool done = false;
@@ -246,25 +183,27 @@ int main(int argc, char** argv) {
                 //     break;
                 case SDL_KEYDOWN:
                     switch(e.key.keysym.sym) {
-                        case SDLK_UP:
-                            std::cout << "Zoom in" << std::endl;
+                        case SDLK_z:
                             camera.moveFront(1.f);
                             break;
-                        case SDLK_DOWN:
-                            std::cout << "Zoom out" << std::endl;
+                        case SDLK_s:
                             camera.moveFront(-1.f);
                             break;
-                        default:
+                        case SDLK_q:
+                            camera.moveLeft(1.f);
                             break;
-                        }
+                        case SDLK_d:
+                            camera.moveLeft(-1.f);
+                            break;
+                    }
                 break;
 				case SDL_MOUSEMOTION:
                     if (windowManager.isMouseButtonPressed(SDL_BUTTON_LEFT)) {
                         if (e.motion.xrel != 0) {
-                            camera.rotateUp(e.motion.xrel / 1.5f);
+                            camera.rotateLeft(-e.motion.xrel / 1.5f);
                         }
                         if (e.motion.yrel != 0) {
-                            camera.rotateLeft(e.motion.yrel / 1.5f);
+                            camera.rotateUp(-e.motion.yrel / 1.5f);
                         }
                         break;
 					}
@@ -294,16 +233,17 @@ int main(int argc, char** argv) {
         glUniformMatrix4fv(earthProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(earthMVMatrix));
         glUniformMatrix4fv(earthProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(earthMVMatrix))));
         glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * earthMVMatrix));
-            
+        // And apply light rotation
+        glm::mat4 lightMVMatrix = glm::rotate(MVMatrix, windowManager.getTime(),glm::vec3(0, 1, 0)); // Translation * Rotation
+        glm::vec3 lightDir_vs(lightMVMatrix * glm::vec4(1, 1, 1, 0)); 
+        glUniform3f(uLightIntensity, 1, .5f, .5f);
+        glUniform3fv(uLightDir_vs, 1, glm::value_ptr(lightDir_vs));
+        glUniform3f(uKd, 0, 0, 1);
+        glUniform3f(uKs, 0.85, 0, 1);
+        glUniform1f(uShininess, 2);
+
         // Bind the VAO
         glBindVertexArray(vao);
-        
-        // Bind the planet earth texture on the GL_TEXTURE0 unit
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textures[0]);
-        // Bind the cloud texture on the GL_TEXTURE1 unit
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, textures[2]);
         
         // Drawing call
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
@@ -314,16 +254,12 @@ int main(int argc, char** argv) {
         // Bind the VAO
         glBindVertexArray(vao);
         
-        // Unbind of GL_TEXTURE1
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, 0);
-        
         // Tell OpenGL to use the moonProgram 
         moonProgram.m_Program.use();
         
         for (int i = 0; i < moonCount; ++i) {
             // Moons transformation 
-            glm::mat4 moonMVMatrix = glm::rotate(MVMatrix, (1 + randomTransforms[i][0]+randomTransforms[i][1]+randomTransforms[i][2]) * windowManager.getTime(),glm::vec3(0, 1, 0)); // Translation * Rotation
+            glm::mat4 moonMVMatrix = glm::rotate(MVMatrix, (1 + randomTransforms[i][0] + randomTransforms[i][1] + randomTransforms[i][2]) * windowManager.getTime(),glm::vec3(0, 1, 0)); // Translation * Rotation
             moonMVMatrix = glm::translate(moonMVMatrix, randomTransforms[i]); // Translation * Rotation * Translation
             moonMVMatrix = glm::scale(moonMVMatrix, glm::vec3(0.2, 0.2, 0.2)); // Translation * Rotation * Translation * Scale
             
@@ -331,19 +267,16 @@ int main(int argc, char** argv) {
             glUniformMatrix4fv(moonProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(moonMVMatrix));
             glUniformMatrix4fv(moonProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(moonMVMatrix))));
             glUniformMatrix4fv(moonProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * moonMVMatrix));
-                
-            // Bind the moon texture on the GL_TEXTURE0 unit
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, textures[1]);
+			glUniform3f(uLightIntensity, .25, .25, .25);
+			glUniform3fv(uLightDir_vs, 1, glm::value_ptr(lightDir_vs));
+			glUniform3f(uKd, 0, 0, 0.85);
+			glUniform3f(uKs, 0, 0, 0.15);
+			glUniform1f(uShininess, 1);
             
             // Drawing call
             glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
             
         }
-        
-        // Unbind of GL_TEXTURE0 unit
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, 0);
         
         // Unbind the VAO
         glBindVertexArray(0);
@@ -354,7 +287,6 @@ int main(int argc, char** argv) {
 
 	glDeleteBuffers(1, &vbo);
 	glDeleteVertexArrays(1, &vao);
-	delete textures;
 
 	return EXIT_SUCCESS;
 }

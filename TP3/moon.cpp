@@ -173,7 +173,7 @@ int main(int argc, char** argv) {
         for(unsigned int i = 0; i < moonCount; i++) {
             // Moons transformation
             glm::mat4 MVMatrix = glm::translate(glm::mat4(1), glm::vec3(0, 0, -5)); // Translation
-            MVMatrix = glm::rotate(MVMatrix, (1+randomTransforms[i][0]+randomTransforms[i][1]+randomTransforms[i][2]) * windowManager.getTime(), glm::vec3(0, 1, 0)); // Translation * Rotation
+            MVMatrix = glm::rotate(MVMatrix, (1 + randomTransforms[i][0]+randomTransforms[i][1]+randomTransforms[i][2]) * windowManager.getTime(), glm::vec3(0, 1, 0)); // Translation * Rotation
             MVMatrix = glm::translate(MVMatrix, randomTransforms[i]); // Translation * Rotation * Translation
             MVMatrix = glm::scale(MVMatrix, glm::vec3(0.2, 0.2, 0.2)); // Translation * Rotation * Translation * Scale
 
