@@ -229,11 +229,12 @@ int main(int argc, char** argv) {
         glUniformMatrix4fv(earthProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(earthMVMatrix))));
         glUniformMatrix4fv(earthProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * earthMVMatrix));
         // And apply light rotation
-        glm::mat4 lightMVMatrix = glm::rotate(MVMatrix, windowManager.getTime(),glm::vec3(0, 1, 0)); // Translation * Rotation
-        glm::vec3 lightDir_vs(lightMVMatrix * glm::vec4(1, 1, 1, 0)); 
+        glm::mat4 lightMVMatrix = glm::rotate(MVMatrix, windowManager.getTime(), glm::vec3(0, 1, 0)); // Translation * Rotation
+        glm::vec3 lightDir_vs(lightMVMatrix * glm::vec4(1, 1, 1, 0));
+        
         glUniform3f(uLightIntensity, 1, .5f, .5f);
         glUniform3fv(uLightDir_vs, 1, glm::value_ptr(lightDir_vs));
-        glUniform3f(uKd, 0, 0, 1);
+        glUniform3f(uKd, 0.35, 0, 1);
         glUniform3f(uKs, 0.85, 0, 1);
         glUniform1f(uShininess, 2);
 
@@ -262,10 +263,11 @@ int main(int argc, char** argv) {
             glUniformMatrix4fv(moonProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(moonMVMatrix));
             glUniformMatrix4fv(moonProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(moonMVMatrix))));
             glUniformMatrix4fv(moonProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * moonMVMatrix));
+            
             glUniform3f(uLightIntensity, .25, .25, .25);
             glUniform3fv(uLightDir_vs, 1, glm::value_ptr(lightDir_vs));
-            glUniform3f(uKd, 0, 0, 0.85);
-            glUniform3f(uKs, 0, 0, 0.15);
+            glUniform3f(uKd, 0.15, 0, 0.55);
+            glUniform3f(uKs, 0.455, 0, 0.85);
             glUniform1f(uShininess, 1);
             
             // Drawing call
