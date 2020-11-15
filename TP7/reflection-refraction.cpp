@@ -43,30 +43,37 @@ unsigned int loadCubemap(std::vector<std::string> faces)
     return textureID;
 }
 
-struct PlanetProgram
+struct ReflectionProgram
 {
     Program m_Program;
 
     GLint uMVPMatrix;
     GLint uMVMatrix;
     GLint uNormalMatrix;
-    GLint uLightIntensity;
-    GLint uLightDir_vs;
-    GLint uKd;
-    GLint uKs;
-    GLint uShininess;
 
-    PlanetProgram(const FilePath &applicationPath) : m_Program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
-                                                                           applicationPath.dirPath() + "shaders/directionallight.fs.glsl"))
+    ReflectionProgram(const FilePath &applicationPath) : m_Program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
+                                                                           applicationPath.dirPath() + "shaders/reflection.fs.glsl"))
     {
         uMVPMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVPMatrix");
         uMVMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVMatrix");
         uNormalMatrix = glGetUniformLocation(m_Program.getGLId(), "uNormalMatrix");
-        uLightIntensity = glGetUniformLocation(m_Program.getGLId(), "uLightIntensity");
-        uLightDir_vs = glGetUniformLocation(m_Program.getGLId(), "uLightDir_vs");
-        uKd = glGetUniformLocation(m_Program.getGLId(), "uKd");
-        uKs = glGetUniformLocation(m_Program.getGLId(), "uKs");
-        uShininess = glGetUniformLocation(m_Program.getGLId(), "uShininess");
+    }
+};
+
+struct RefractionProgram
+{
+    Program m_Program;
+
+    GLint uMVPMatrix;
+    GLint uMVMatrix;
+    GLint uNormalMatrix;
+
+    RefractionProgram(const FilePath &applicationPath) : m_Program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
+                                                                           applicationPath.dirPath() + "shaders/refraction.fs.glsl"))
+    {
+        uMVPMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVPMatrix");
+        uMVMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVMatrix");
+        uNormalMatrix = glGetUniformLocation(m_Program.getGLId(), "uNormalMatrix");
     }
 };
 
@@ -80,8 +87,8 @@ struct SkyBoxProgram
     SkyBoxProgram(const FilePath &applicationPath) : m_Program(loadProgram(applicationPath.dirPath() + "shaders/skybox.vs.glsl",
                                                                            applicationPath.dirPath() + "shaders/skybox.fs.glsl"))
     {
-        uMVMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVMatrix");
-        uMVPMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVPMatrix");
+        uMVMatrix = glGetUniformLocation(m_Program.getGLId(), "MVMatrix");
+        uMVPMatrix = glGetUniformLocation(m_Program.getGLId(), "MVPMatrix");
     }
 };
 
@@ -105,7 +112,7 @@ int main(int argc, char **argv)
     FilePath applicationPath(argv[0]);
 
     SkyBoxProgram skyBoxProgram(applicationPath);
-    PlanetProgram planetProgram(applicationPath);
+    ReflectionProgram reflectionProgram(applicationPath);
 
     // Activate GPU's depth test
     glEnable(GL_DEPTH_TEST);
@@ -315,24 +322,32 @@ int main(int argc, char **argv)
         // Get the ViewMatrix
         MVMatrix = camera.getViewMatrix();
 
-        // Planet
-        planetProgram.m_Program.use();
+        // Planet 1 (reflection)
+        reflectionProgram.m_Program.use();
 
-        glm::mat4 planetMVMatrix = glm::rotate(MVMatrix, windowManager.getTime(), glm::vec3(0, 1, 0)); // Translation * Rotation
-        glUniformMatrix4fv(planetProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(planetMVMatrix));
-        glUniformMatrix4fv(planetProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(planetMVMatrix))));
-        glUniformMatrix4fv(planetProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * planetMVMatrix));
-
-        glm::mat4 lightMVMatrix = glm::rotate(MVMatrix, 4.75f, glm::vec3(-1, -1.5, 0)); // Translation * Rotation
-        glm::vec3 lightDir_vs(lightMVMatrix * glm::vec4(1, 1, 1, 0));
-        glUniform3f(planetProgram.uLightIntensity, 1, .5f, .5f);
-        glUniform3fv(planetProgram.uLightDir_vs, 1, glm::value_ptr(lightDir_vs));
-        glUniform3f(planetProgram.uKd, 0.05, 0, 1);
-        glUniform3f(planetProgram.uKs, 0.15, 0.15, 1);
-        glUniform1f(planetProgram.uShininess, 2);
+        glm::mat4 reflectionMVMatrix = glm::translate(MVMatrix, glm::vec3(1.5f, 0, 0)); // Translation on the right
+        glUniformMatrix4fv(reflectionProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(reflectionMVMatrix));
+        glUniformMatrix4fv(reflectionProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(reflectionMVMatrix))));
+        glUniformMatrix4fv(reflectionProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * reflectionMVMatrix));
 
         glBindVertexArray(planetVAO);
         glBindBuffer(GL_ARRAY_BUFFER, planetVAO);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindVertexArray(0);
+
+        // Planet 2 (refraction)
+        reflectionProgram.m_Program.use();
+
+        reflectionMVMatrix = glm::translate(MVMatrix, glm::vec3(-1.5f, 0, 0)); // Translation on the left
+        glUniformMatrix4fv(reflectionProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(reflectionMVMatrix));
+        glUniformMatrix4fv(reflectionProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(reflectionMVMatrix))));
+        glUniformMatrix4fv(reflectionProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * reflectionMVMatrix));
+
+        glBindVertexArray(planetVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, planetVAO);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
