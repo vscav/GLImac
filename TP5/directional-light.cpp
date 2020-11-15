@@ -200,6 +200,7 @@ int main(int argc, char** argv) {
 				case SDL_MOUSEMOTION:
                     if (windowManager.isMouseButtonPressed(SDL_BUTTON_LEFT)) {
                         if (e.motion.xrel != 0) {
+                            std::cout << e.motion.xrel << std::endl;
                             camera.rotateLeft(-e.motion.xrel / 1.5f);
                         }
                         if (e.motion.yrel != 0) {

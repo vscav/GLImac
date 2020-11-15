@@ -66,15 +66,12 @@ int main(int argc, char** argv) {
     FilePath applicationPath(argv[0]);
     EarthProgram earthProgram(applicationPath);
     MoonProgram moonProgram(applicationPath);
-
-    Program program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
-								applicationPath.dirPath() + "shaders/pointlight.fs.glsl"));
                                 
-    GLint uLightIntensity = glGetUniformLocation(program.getGLId(), "uLightIntensity");
-    GLint uLightPos_vs = glGetUniformLocation(program.getGLId(), "uLightPos_vs");
-    GLint uKd = glGetUniformLocation(program.getGLId(), "uKd");
-    GLint uKs = glGetUniformLocation(program.getGLId(), "uKs");
-    GLint uShininess = glGetUniformLocation(program.getGLId(), "uShininess");
+    GLint uLightIntensity = glGetUniformLocation(earthProgram.m_Program.getGLId(), "uLightIntensity");
+    GLint uLightPos_vs = glGetUniformLocation(earthProgram.m_Program.getGLId(), "uLightPos_vs");
+    GLint uKd = glGetUniformLocation(earthProgram.m_Program.getGLId(), "uKd");
+    GLint uKs = glGetUniformLocation(earthProgram.m_Program.getGLId(), "uKs");
+    GLint uShininess = glGetUniformLocation(earthProgram.m_Program.getGLId(), "uShininess");
 
     // Activate GPU's depth test
     glEnable(GL_DEPTH_TEST);
