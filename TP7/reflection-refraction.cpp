@@ -52,7 +52,7 @@ struct ReflectionProgram
     GLint uNormalMatrix;
 
     ReflectionProgram(const FilePath &applicationPath) : m_Program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
-                                                                           applicationPath.dirPath() + "shaders/reflection.fs.glsl"))
+                                                                               applicationPath.dirPath() + "shaders/reflection.fs.glsl"))
     {
         uMVPMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVPMatrix");
         uMVMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVMatrix");
@@ -69,7 +69,7 @@ struct RefractionProgram
     GLint uNormalMatrix;
 
     RefractionProgram(const FilePath &applicationPath) : m_Program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
-                                                                           applicationPath.dirPath() + "shaders/refraction.fs.glsl"))
+                                                                               applicationPath.dirPath() + "shaders/refraction.fs.glsl"))
     {
         uMVPMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVPMatrix");
         uMVMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVMatrix");
@@ -113,6 +113,7 @@ int main(int argc, char **argv)
 
     SkyBoxProgram skyBoxProgram(applicationPath);
     ReflectionProgram reflectionProgram(applicationPath);
+    ReflectionProgram refractionProgram(applicationPath);
 
     // Activate GPU's depth test
     glEnable(GL_DEPTH_TEST);
@@ -123,6 +124,8 @@ int main(int argc, char **argv)
 
     // Create a sphere (using glimac class Sphere)
     Sphere sphere(1, 32, 16);
+
+    int wireframe = 0;
 
     // Create a freefly camera (using the default constructor)
     FreeflyCamera camera;
@@ -269,6 +272,9 @@ int main(int argc, char **argv)
                 case SDLK_d:
                     camera.moveLeft(-1.f);
                     break;
+                case SDLK_w:
+                    wireframe = (wireframe == 0 ? 1 : 0);
+                    break;
                 }
                 break;
             case SDL_MOUSEMOTION:
@@ -292,8 +298,16 @@ int main(int argc, char **argv)
         // Clean the depth buffer on each loop
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        if (wireframe)
+            glClearColor(.7f, .7f, .7f, .8f);
+
         // Prevent that your skybox draws depth values, and the skybox will never be in front of anything that will be drawn later
         glDisable(GL_DEPTH_TEST);
+
+        if (wireframe)
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        else
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         // Skybox
         skyBoxProgram.m_Program.use();
@@ -305,10 +319,8 @@ int main(int argc, char **argv)
         glUniformMatrix4fv(skyBoxProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix));
 
         glBindVertexArray(skyboxVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
         glDrawArrays(GL_TRIANGLES, 0, 36);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
         // Set depth function back to default
@@ -331,25 +343,19 @@ int main(int argc, char **argv)
         glUniformMatrix4fv(reflectionProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * reflectionMVMatrix));
 
         glBindVertexArray(planetVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, planetVAO);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
         // Planet 2 (refraction)
-        reflectionProgram.m_Program.use();
+        refractionProgram.m_Program.use();
 
-        reflectionMVMatrix = glm::translate(MVMatrix, glm::vec3(-1.5f, 0, 0)); // Translation on the left
-        glUniformMatrix4fv(reflectionProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(reflectionMVMatrix));
-        glUniformMatrix4fv(reflectionProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(reflectionMVMatrix))));
-        glUniformMatrix4fv(reflectionProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * reflectionMVMatrix));
+        glm::mat4 refractionMVMatrix = glm::translate(MVMatrix, glm::vec3(-1.5f, 0, 0)); // Translation on the left
+        glUniformMatrix4fv(refractionProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(refractionMVMatrix));
+        glUniformMatrix4fv(refractionProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(refractionMVMatrix))));
+        glUniformMatrix4fv(refractionProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * refractionMVMatrix));
 
         glBindVertexArray(planetVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, planetVAO);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
         glDrawArrays(GL_TRIANGLES, 0, sphere.getVertexCount());
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
 
         // Update the display
