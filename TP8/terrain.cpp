@@ -21,8 +21,8 @@ struct TerrainProgram
     GLint uMVMatrix;
     GLint uNormalMatrix;
 
-    TerrainProgram(const FilePath &applicationPath) : m_Program(loadProgram(applicationPath.dirPath() + "shaders/3D.vs.glsl",
-                                                                           applicationPath.dirPath() + "shaders/normals.fs.glsl"))
+    TerrainProgram(const FilePath &applicationPath) : m_Program(loadProgram(applicationPath.dirPath() + "shaders/terrain.vs.glsl",
+                                                                            applicationPath.dirPath() + "shaders/terrain.fs.glsl"))
     {
         uMVPMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVPMatrix");
         uMVMatrix = glGetUniformLocation(m_Program.getGLId(), "uMVMatrix");
@@ -58,17 +58,16 @@ int main(int argc, char **argv)
     glm::mat4 NormalMatrix = glm::transpose(glm::inverse(MVMatrix));
 
     // Noise type
-    FastNoise::NoiseType noiseType = static_cast<FastNoise::NoiseType>(4);
+    FastNoise::NoiseType noiseType = static_cast<FastNoise::NoiseType>(3);
 
     // Create a terrain
     Terrain *t = nullptr;
-    t = new Terrain(300 , 0.15, noiseType, 0.01);
+    // t = new Terrain(100, 0.1, noiseType, 0.006, 980, 4, 4, 0);
+    t = new Terrain(100, 0.15, noiseType, 0.008, 910, 4, 4, 0);
 
     std::string config = t->getTerrainConfigString();
 
     std::cout << config << std::endl;
-
-    int wireframe = 1;
 
     // Create a freefly camera (using the default constructor)
     FreeflyCamera camera;
@@ -101,9 +100,6 @@ int main(int argc, char **argv)
                 case SDLK_d:
                     camera.moveLeft(-1.f);
                     break;
-                case SDLK_w:
-                    wireframe = (wireframe == 0 ? 1 : 0);
-                    break;
                 }
                 break;
             case SDL_MOUSEMOTION:
@@ -127,30 +123,27 @@ int main(int argc, char **argv)
         // Clean the depth buffer on each loop
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        if (wireframe)
-            glClearColor(.7f, .7f, .7f, .8f);
-        else
-            glClearColor(.25f, .25f, .25f, .8f);
-        // Prevent that your skybox draws depth values, and the skybox will never be in front of anything that will be drawn later
-        glDisable(GL_DEPTH_TEST);
+        glClearColor(1.f, 1.f, 1.f, 1.f);
 
-        if (wireframe)
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        else
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glFrontFace(GL_CCW);
+        glCullFace(GL_BACK);
+        glEnable(GL_CULL_FACE);
 
         glEnable(GL_DEPTH_TEST);
 
+        glEnable(GL_POLYGON_OFFSET_FILL);
+        glPolygonOffset(2.0, 2.0);
         // Get the ViewMatrix
         MVMatrix = camera.getViewMatrix();
 
-        // Planet 1 (reflection)
+        // Terrain program
         terrainProgram.m_Program.use();
 
         glUniformMatrix4fv(terrainProgram.uMVMatrix, 1, GL_FALSE, glm::value_ptr(MVMatrix));
         glUniformMatrix4fv(terrainProgram.uNormalMatrix, 1, GL_FALSE, glm::value_ptr(glm::transpose(glm::inverse(MVMatrix))));
         glUniformMatrix4fv(terrainProgram.uMVPMatrix, 1, GL_FALSE, glm::value_ptr(ProjMatrix * MVMatrix));
 
+        // Render the terrain
         t->render();
 
         // Update the display

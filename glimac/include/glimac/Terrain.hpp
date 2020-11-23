@@ -15,60 +15,47 @@
 class Terrain
 {
 public:
-    Terrain(GLuint _size, GLfloat _tileSize, FastNoise::NoiseType _noiseType, GLfloat _noiseFrequency);
-    Terrain(GLuint _size, GLfloat _tileSize, FastNoise::NoiseType _noiseType, GLfloat _noiseFrequency, GLint seed);
-    Terrain(GLuint _size, GLfloat _tileSize, FastNoise::NoiseType _noiseType, GLfloat _noiseFrequency, GLint seed, GLint noiseOctaves, GLint noiseMagnitude, GLboolean isIsland);
-
+    Terrain(GLuint size, GLfloat tileSize, FastNoise::NoiseType noiseType, GLfloat noiseFrequency);
+    Terrain(GLuint size, GLfloat tileSize, FastNoise::NoiseType noiseType, GLfloat noiseFrequency, GLint seed);
+    Terrain(GLuint size, GLfloat tileSize, FastNoise::NoiseType noiseType, GLfloat noiseFrequency, GLint seed, GLint octaves, GLint magnitude, GLboolean isIsland);
+    
     std::string getTerrainConfigString();
 
     glm::vec3 getFirstVertexPosition();
 
-    void increaseNoiseFrequency();
-    void decreaseNoiseFrequency();
-
-    void increaseMagnitude();
-    void decreaseMagnitude();
-
-    void increaseOctaves();
-    void decreaseOctaves();
-
     void makeIsland();
 
-    void regenerateTerrain();
-
-    // void render(GLuint& program);
     void render();
-    glm::mat4 getModel();
 
 private:
-    GLuint VAO;
-    GLuint VBO, EBO;
+    GLuint m_VAO;
+    GLuint m_VBO, m_EBO;
 
-    std::vector<GLfloat> vertices;
-    std::vector<GLuint> indices;
+    std::vector<GLfloat> m_vertices;
+    std::vector<GLuint> m_indices;
 
-    GLfloat fillR = 0.0f;
-    GLfloat fillG = 0.0f;
-    GLfloat fillB = 0.0f;
+    GLfloat m_fillR = 0.0f;
+    GLfloat m_fillG = 0.0f;
+    GLfloat m_fillB = 0.0f;
 
-    GLuint width;
-    GLuint height;
+    GLuint m_width;
+    GLuint m_height;
 
-    GLint centerX;
-    GLint centerY;
-    GLfloat maxDistance;
+    GLint m_centerX;
+    GLint m_centerY;
+    GLfloat m_maxDistance;
 
-    GLfloat tileSize;
-    GLint seed;
-    GLuint octaves;
-    GLint magnitude;
-    GLfloat exponent = 2;
+    GLfloat m_tileSize;
+    GLint m_seed;
+    GLuint m_octaves;
+    GLint m_magnitude;
+    GLfloat m_exponent = 2;
 
-    GLboolean isIsland = false;
+    GLboolean m_isIsland = false;
 
-    FastNoise noise;
-    GLfloat noiseFrequency;
-    FastNoise::NoiseType noiseType;
+    FastNoise m_noise;
+    GLfloat m_noiseFrequency;
+    FastNoise::NoiseType m_noiseType;
 
     std::vector<std::vector<GLfloat>> colours = {
         //  r     g     b
@@ -106,10 +93,7 @@ private:
 
     void initBuffers();
 
-    void updateColourForHeight(GLuint &startIndex, GLfloat &y);
     void addColourForHeight(GLfloat &y);
-
-    void updateHeightmap(GLboolean useNewSeed);
 
     void loadIntoShader();
 };
